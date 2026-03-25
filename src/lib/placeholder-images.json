@@ -1,0 +1,142 @@
+{
+  "placeholderImages": [
+    {
+      "id": "hero-background",
+      "description": "A vibrant world map with travel routes",
+      "imageUrl": "https://images.unsplash.com/photo-1706823871410-ed8b01faef7e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx3b3JsZCUyMG1hcHxlbnwwfHx8fDE3NjI4NzE3Mzl8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "world map"
+    },
+    {
+      "id": "testimonial-1",
+      "description": "Avatar for a happy traveler",
+      "imageUrl": "https://images.unsplash.com/photo-1554727242-741c14fa561c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxwZXJzb24lMjBzbWlsaW5nfGVufDB8fHx8fDE3NjI5NDQ4Mzd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person smiling"
+    },
+    {
+      "id": "testimonial-2",
+      "description": "Avatar for another happy traveler",
+      "imageUrl": "https://images.unsplash.com/photo-1508867743401-21ad68d105b1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHx3b21hbiUyMHRyYXZlbHxlbnwwfHx8fDE3NjI5NTY1MTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "woman travel"
+    },
+    {
+      "id": "testimonial-3",
+      "description": "Avatar for a third happy traveler",
+      "imageUrl": "https://images.unsplash.com/photo-1522556189639-b150ed9c4330?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxtYW4lMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjI5NTI2MDJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "man portrait"
+    },
+    {
+      "id": "how-it-works-ask",
+      "description": "Illustration for asking the AI a question",
+      "imageUrl": "https://images.unsplash.com/photo-1493612276216-ee3925520721?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxwZXJzb24lMjB0aGlua2luZ3xlbnwwfHx8fDE3NjI5MjkyMTJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person thinking"
+    },
+    {
+      "id": "how-it-works-plan",
+      "description": "Illustration for planning an itinerary",
+      "imageUrl": "https://images.unsplash.com/photo-1619468129361-605ebea04b44?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtYXAlMjBsb2NhdGlvbnxlbnwwfHx8fDE3NjI5MDU1NDd8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "map location"
+    },
+    {
+      "id": "how-it-works-explore",
+      "description": "Illustration for exploring a new place",
+      "imageUrl": "https://images.unsplash.com/photo-1662481137545-545addc4a1a5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxwZXJzb24lMjBoaWtpbmd8ZW58MHx8fHwxNzYyOTM2ODUwfDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "person hiking"
+    },
+    {
+      "id": "about-story",
+      "description": "Image illustrating the story of Wanderwise AI",
+      "imageUrl": "https://images.unsplash.com/photo-1648912024151-7bdb206b0547?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHx0cmF2ZWwlMjBqb3VybmFsfGVufDB8fHx8MTc2Mjk3NDg0NXww&ixlibrb-4.1.0&q=80&w=1080",
+      "imageHint": "travel journal"
+    },
+    {
+      "id": "team-member-1",
+      "description": "Portrait of the company founder, Elara Vance",
+      "imageUrl": "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxwcm9mZXNzaW9uYWwlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NjI5NzQwMjN8MA&ixlibrb-4.1.0&q=80&w=1080",
+      "imageHint": "founder portrait"
+    },
+    {
+      "id": "team-member-2",
+      "description": "Portrait of the Lead AI Architect, Kaelen Corr",
+      "imageUrl": "https://images.unsplash.com/photo-1525134479668-1bee5c7c6845?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw3fHx3b21hbiUyMHNtaWxpbmd8ZW58MHx8fHwxNzYyODY1MTk3fDA&ixlibrb-4.1.0&q=80&w=1080",
+      "imageHint": "tech lead"
+    },
+    {
+      "id": "blog-post-1",
+      "description": "A beautiful tropical beach",
+      "imageUrl": "https://images.unsplash.com/photo-1586500036706-41963de24d8b?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHx0cm9waWNhbCUyMGJlYWNofGVufDB8fHx8MTc2MzI4MDA1M3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "tropical beach"
+    },
+    {
+      "id": "blog-post-2",
+      "description": "Someone planning a trip on a map",
+      "imageUrl": "https://images.unsplash.com/photo-1615826932727-ed9f182ac67e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHx0cmF2ZWwlMjBwbGFubmluZ3xlbnwwfHx8fDE3NjMzMDk2NTN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "travel planning"
+    },
+    {
+      "id": "blog-post-3",
+      "description": "A plate of delicious Mexican food",
+      "imageUrl": "https://images.unsplash.com/photo-1565299585323-38d6b0865b47?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxtZXhpY2FuJTIwZm9vZHxlbnwwfHx8fDE3NjMyNjY5Mjh8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "mexican food"
+    },
+    {
+      "id": "blog-post-4",
+      "description": "Eiffel Tower in Paris at sunset",
+      "imageUrl": "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxwYXJpcyUyMGZyYW5jZXxlbnwwfHx8fDE3NjM0OTA5NzJ8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "paris france"
+    },
+    {
+      "id": "blog-post-5",
+      "description": "The Colosseum in Rome, Italy",
+      "imageUrl": "https://images.unsplash.com/photo-1552832230-c0197dd311b5?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxyb21lJTIwaXRhbHl8ZW58MHx8fHwxNzYzNDkwOTczfDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "rome italy"
+    },
+    {
+      "id": "blog-post-6",
+      "description": "Fushimi Inari Shrine in Kyoto, Japan",
+      "imageUrl": "https://images.unsplash.com/photo-1732871351320-db418d43e5aa?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxreW90byUyMGphcGFufGVufDB8fHx8MTc2MzQ5MDk3Mnww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "kyoto japan"
+    },
+    {
+      "id": "blog-post-7",
+      "description": "A historic tram in Lisbon, Portugal",
+      "imageUrl": "https://images.unsplash.com/photo-1625223181444-128aab274266?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxsaXNib24lMjBwb3J0dWdhbHxlbnwwfHx8fDE3NjM1NzgwMjZ8MA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "lisbon portugal"
+    },
+    {
+      "id": "blog-post-8",
+      "description": "The Pyramids of Giza in Cairo, Egypt",
+      "imageUrl": "https://images.unsplash.com/photo-1724921812241-6554e4703ef0?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxjYWlybyUyMGVneXB0fGVufDB8fHx8MTc2MzQ5MDk3Mnww&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "cairo egypt"
+    },
+    {
+      "id": "avatar-1",
+      "description": "Avatar image of a person",
+      "imageUrl": "https://images.unsplash.com/photo-1633332755192-727a05c4013d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxhdmF0YXJ8ZW58MHx8fHwxNzYzMzE1MjMzfDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "avatar person"
+    },
+    {
+      "id": "avatar-2",
+      "description": "Avatar image of a smiling person",
+      "imageUrl": "https://images.unsplash.com/photo-1494790108377-be9c29b29330?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxhdmF0YXJ8ZW58MHx8fHwxNzYzMzE1MjMzfDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "avatar smiling"
+    },
+    {
+      "id": "avatar-3",
+      "description": "Avatar image of a person with glasses",
+      "imageUrl": "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxhdmF0YXJ8ZW58MHx8fHwxNzYzMzE1MjMzfDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "avatar glasses"
+    },
+    {
+      "id": "avatar-4",
+      "description": "Avatar image of a person in a hat",
+      "imageUrl": "https://images.unsplash.com/photo-1599566150163-29194dcaad36?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxhdmF0YXJ8ZW58MHx8fHwxNzYzMzE1MjMzfDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "avatar hat"
+    },
+    {
+      "id": "checkout-success",
+      "description": "A green checkmark indicating success",
+      "imageUrl": "https://images.unsplash.com/photo-1620076292415-1317c3859737?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwyfHxjaGVjayUyMGljb258ZW58MHx8fHwxNzY0NzMwNjM0fDA&ixlib-rb-4.1.0&q=80&w=1080",
+      "imageHint": "check icon"
+    }
+  ]
+}

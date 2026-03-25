@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Firebase Google Login Test</title>
+    <style>
+      body {
+        font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          sans-serif;
+        max-width: 600px;
+        margin: 40px auto;
+        padding: 16px;
+      }
+      button {
+        padding: 10px 16px;
+        font-size: 16px;
+      }
+      pre {
+        background: #f3f3f3;
+        padding: 10px;
+        border-radius: 8px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Google Login Test</h1>
+
+    <button id="googleBtn">Sign in with Google</button>
+
+    <h2>Log</h2>
+    <pre id="log"></pre>
+
+    <script type="module">
+      // 1. Import Firebase from CDN
+      import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+      import {
+        getAuth,
+        GoogleAuthProvider,
+        signInWithPopup,
+        signInWithRedirect,
+        getRedirectResult,
+        onAuthStateChanged,
+      } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+      // 2. Your firebaseConfig - COPY FROM FIREBASE CONSOLE
+      const firebaseConfig = {
+        apiKey: "AIzaSyBRZZ5wJ2YpMwNDAHGAlNhOFQ1T6FdNkqk",
+        authDomain: "studio-7785401397-f3878.firebaseapp.com",
+        projectId: "studio-7785401397-f3878",
+        storageBucket: "studio-7785401397-f3878.firebasestorage.app",
+        messagingSenderId: "110702874229",
+        appId: "1:110702874229:web:864e48524811fedd50723c",
+      };
+
+      // 3. Init Firebase
+      const app = initializeApp(firebaseConfig);
+      const auth = getAuth(app);
+      const provider = new GoogleAuthProvider();
+
+      // 4. Simple logger
+      const logEl = document.getElementById("log");
+      function log(msg, extra) {
+        const time = new Date().toISOString().split("T")[1].slice(0, 8);
+        logEl.textContent += `[${time}] ${msg}\n`;
+        if (extra) {
+          logEl.textContent += JSON.stringify(extra, null, 2) + "\n\n";
+        }
+      }
+
+      // 5. Watch auth state
+      onAuthStateChanged(auth, (user) => {
+        if (user) {
+          log("onAuthStateChanged: signed in", {
+            uid: user.uid,
+            email: user.email,
+          });
+        } else {
+          log("onAuthStateChanged: signed out");
+        }
+      });
+
+      // 6. Handle redirect results (for mobile)
+      getRedirectResult(auth)
+        .then((result) => {
+          if (result?.user) {
+            log("Redirect sign-in success", {
+              uid: result.user.uid,
+              email: result.user.email,
+            });
+          }
+        })
+        .catch((error) => {
+          if (error) {
+            log("Redirect error", {
+              code: error.code,
+              message: error.message,
+            });
+          }
+        });
+
+      // 7. Button → try popup, fallback to redirect
+      document.getElementById("googleBtn").addEventListener("click", async () => {
+  log("Starting Google sign-in…");
+  try {
+    const result = await signInWithPopup(auth, provider);
+    log("Popup sign-in success", {
+      uid: result.user.uid,
+      email: result.user.email,
+    });
+  } catch (error) {
+    log("Popup sign-in error", {
+      code: error.code,
+      message: error.message,
+      email: error.customData?.email,
+    });
+  }
+});
+
+    </script>
+  </body>
+</html>
