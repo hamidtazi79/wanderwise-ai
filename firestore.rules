@@ -1,0 +1,124 @@
+/**
+ * Core Philosophy: This ruleset enforces a strict user-ownership model. All user-generated
+ * data, including profiles and itineraries, is stored in a private data tree under a path
+ * corresponding to the user's unique authentication ID (`/users/{userId}`). This ensures that
+ * a user can only ever access their own data.
+ *
+ * Data Structure: The data is organized hierarchically. A top-level `/users` collection
+ * (which is not directly queryable) contains documents for each user. Each user document,
+ * identified by their UID, holds their profile information. Nested within each user document is
+ * an `itineraries` subcollection, containing only the itineraries created by that user.
+ *
+ * Key Security Decisions:
+ * - Strict Ownership: Access to any document is granted only if the requesting user's
+ *   authenticated UID matches the `{userId}` parameter in the document path.
+ * - No User Listing: It is impossible to query or list documents in the top-level `/users`
+ *   collection, preventing enumeration of all application users.
+ * - Default Deny: Any path not explicitly defined in these rules is inaccessible.
+ *
+ * Denormalization for Authorization: This model is built on path-based authorization. The
+ * user's UID is part of the document path, which is the most performant way to write
+ * security rules as it avoids extra `get()` calls. To ensure data integrity, create rules
+ * validate that an internal ownership field (e.g., `userId` on an itinerary) matches the
+ * user ID from the path.
+ *
+ * Structural Segregation: User data is completely segregated by path. A user's private
+ * itineraries are stored in a subcollection under their own user document, physically separating
+ * their data from all other users' data. This makes list queries on subcollections inherently
+ * secure and efficient.
+ */
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions for improved readability and reusability.
+
+    /**
+     * Checks if the user is authenticated.
+     */
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    /**
+     * Checks if the requesting user's UID matches the userId in the path.
+     * This is the primary function for enforcing the ownership model.
+     * @param userId The user ID from the document path.
+     */
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    /**
+     * For update/delete operations, confirms the document exists and the user owns it.
+     * This prevents operations on non-existent documents and enforces ownership.
+     * @param userId The user ID from the document path.
+     */
+    function isExistingOwner(userId) {
+      return isOwner(userId) && resource != null;
+    }
+
+    /**
+     * On create, validates the incoming UserProfile document has an 'id' field
+     * that matches the user's auth UID. This enforces relational integrity.
+     */
+    function userProfileHasCorrectIdOnCreate(userId) {
+      return request.resource.data.id == userId;
+    }
+
+    /**
+     * On update, ensures the 'id' field of a UserProfile is immutable.
+     * This prevents re-assigning a profile to a different user.
+     */
+    function userProfileIdIsImmutable() {
+      return request.resource.data.id == resource.data.id;
+    }
+
+    /**
+     * On create, validates the incoming Itinerary document has a 'userId' field
+     * that matches the owner's auth UID from the path.
+     */
+    function itineraryHasCorrectOwnerOnCreate(userId) {
+      return request.resource.data.userId == userId;
+    }
+
+    /**
+     * On update, ensures the 'userId' field of an Itinerary is immutable,
+     * preventing an itinerary from being re-assigned to a different user.
+     */
+    function itineraryOwnerIsImmutable() {
+      return request.resource.data.userId == resource.data.userId;
+    }
+
+
+    /**
+     * @description Manages a user's own profile document.
+     * @path /users/{userId}
+     * @allow (create) A signed-in user (auth.uid: 'user123') creates their own profile at `/users/user123`.
+     * @deny (get) A user (auth.uid: 'user456') tries to read the profile at `/users/user123`.
+     * @principle Restricts access to a user's own data tree.
+     */
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow list: if false;
+      allow create: if isOwner(userId) && userProfileHasCorrectIdOnCreate(userId);
+      allow update: if isExistingOwner(userId) && userProfileIdIsImmutable();
+      allow delete: if isExistingOwner(userId);
+    }
+
+    /**
+     * @description Manages travel itineraries owned by a specific user.
+     * @path /users/{userId}/itineraries/{itineraryId}
+     * @allow (list) A signed-in user (auth.uid: 'user123') lists all itineraries under `/users/user123/itineraries`.
+     * @deny (update) A user (auth.uid: 'user456') tries to update an itinerary at `/users/user123/itineraries/itinABC`.
+     * @principle Enforces document ownership for all operations within a user's private subcollection.
+     */
+    match /users/{userId}/itineraries/{itineraryId} {
+      allow get: if isOwner(userId);
+      allow list: if isOwner(userId);
+      allow create: if isOwner(userId) && itineraryHasCorrectOwnerOnCreate(userId);
+      allow update: if isExistingOwner(userId) && itineraryOwnerIsImmutable();
+      allow delete: if isExistingOwner(userId);
+    }
+  }
+}
