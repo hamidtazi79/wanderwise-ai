@@ -112,39 +112,47 @@ function CheckoutSuccessContent() {
 
     const updateSubscription = async () => {
       try {
-        const {
-          isPaid,
-          plan,
-          userId,
-          customerId,
-          subscriptionId,
-        } = await verifyCheckoutSession(sessionId);
+        const result = await verifyCheckoutSession(sessionId);
 
-        if (!isPaid || !plan || userId !== user.uid) {
-          throw new Error('Payment verification failed or user mismatch.');
+        if (!result.isPaid) {
+          throw new Error('Payment verification failed.');
         }
 
-        const userProfileRef = doc(firestore, `users/${user.uid}`);
+        if (!result.userId || result.userId !== user.uid) {
+          throw new Error('User mismatch during checkout verification.');
+        }
+
+        if (!result.plan) {
+          throw new Error('No subscription plan found in checkout session.');
+        }
+
+        if (!result.subscriptionId) {
+          throw new Error('No Stripe subscription ID returned from checkout session.');
+        }
+
         const now = new Date().toISOString();
+        const userProfileRef = doc(firestore, `users/${user.uid}`);
 
         await setDoc(
           userProfileRef,
           {
-            subscriptionStatus: plan,
+            subscriptionStatus: result.plan,
             subscriptionStartDate: now,
-            updatedAt: now,
-            stripeCustomerId: customerId || null,
-            stripeSubscriptionId: subscriptionId || null,
             subscriptionCancelAtPeriodEnd: false,
+            subscriptionCurrentPeriodEnd: result.currentPeriodEnd || null,
+            stripeSubscriptionId: result.subscriptionId,
+            stripeCustomerId: result.customerId || null,
+            updatedAt: now,
           },
           { merge: true }
         );
 
         setStatus('success');
-      } catch (e) {
+      } catch (e: any) {
         console.error('Subscription update failed:', e);
         setErrorMessage(
-          'We confirmed your payment, but failed to update your account. Please contact support.'
+          e?.message ||
+            'We confirmed your payment, but failed to update your account. Please contact support.'
         );
         setStatus('error');
       }
