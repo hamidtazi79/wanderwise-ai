@@ -180,28 +180,25 @@ function SubscriptionTab() {
   const renewalDate = getRenewalDate();
 
   const handleCancelSubscription = async () => {
-    if (!userProfileRef) return;
+    if (!userProfileRef || !user?.email) return;
 
     try {
       setIsCancelling(true);
 
-      const stripeSubscriptionId = userProfile?.stripeSubscriptionId;
-
-      if (!stripeSubscriptionId) {
-        throw new Error(
-          'No Stripe subscription ID found for this account. Please contact support.'
-        );
-      }
-
-      const result = await cancelStripeSubscriptionAtPeriodEnd(
-        stripeSubscriptionId
-      );
+      const result = await cancelStripeSubscriptionAtPeriodEnd({
+        subscriptionId: userProfile?.stripeSubscriptionId || null,
+        email: user.email,
+      });
 
       if (!result.success) {
-        throw new Error('Failed to cancel subscription in Stripe.');
+        throw new Error(result.message);
       }
 
       await updateDoc(userProfileRef, {
+        stripeSubscriptionId:
+          result.subscriptionId || userProfile?.stripeSubscriptionId || null,
+        stripeCustomerId:
+          result.customerId || userProfile?.stripeCustomerId || null,
         subscriptionCancelAtPeriodEnd: result.cancelAtPeriodEnd,
         subscriptionCurrentPeriodEnd: result.currentPeriodEnd,
         updatedAt: new Date().toISOString(),
@@ -209,13 +206,12 @@ function SubscriptionTab() {
 
       toast({
         title: 'Cancellation scheduled',
-        description:
-          result.currentPeriodEnd
-            ? `Your subscription will stay active until ${format(
-                new Date(result.currentPeriodEnd),
-                'MMMM dd, yyyy'
-              )}.`
-            : 'Your subscription will stay active until the end of the billing period.',
+        description: result.currentPeriodEnd
+          ? `Your subscription will remain active until ${format(
+              new Date(result.currentPeriodEnd),
+              'MMMM dd, yyyy'
+            )}.`
+          : 'Your subscription will remain active until the end of the billing period.',
       });
     } catch (e: any) {
       console.error(e);
@@ -398,7 +394,8 @@ function OverviewTab({
     );
   }, [user, firestore]);
 
-  const { data: userProfile, isLoading: isProfileLoading } = useDoc(userProfileRef);
+  const { data: userProfile, isLoading: isProfileLoading } =
+    useDoc(userProfileRef);
   const { data: itineraries } = useCollection(itinerariesQuery);
 
   const isSubscribed = userProfile?.subscriptionStatus !== 'free';
