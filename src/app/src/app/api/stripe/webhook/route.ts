@@ -1,65 +1,99 @@
 import Stripe from 'stripe';
-import { headers } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { initializeApp, getApps } from 'firebase-admin/app';
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// 🔐 Initialize Firebase Admin (server side)
+if (!process.env.STRIPE_SECRET_KEY) {
+  throw new Error('STRIPE_SECRET_KEY is missing');
+}
+
+if (!process.env.STRIPE_WEBHOOK_SECRET) {
+  throw new Error('STRIPE_WEBHOOK_SECRET is missing');
+}
+
+if (!process.env.FIREBASE_PROJECT_ID) {
+  throw new Error('FIREBASE_PROJECT_ID is missing');
+}
+
+if (!process.env.FIREBASE_CLIENT_EMAIL) {
+  throw new Error('FIREBASE_CLIENT_EMAIL is missing');
+}
+
+if (!process.env.FIREBASE_PRIVATE_KEY) {
+  throw new Error('FIREBASE_PRIVATE_KEY is missing');
+}
+
+// Initialize Firebase Admin only once
 if (!getApps().length) {
   initializeApp({
-    credential: {
+    credential: cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-    } as any,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    }),
   });
 }
 
 const db = getFirestore();
 
-// 🔐 Stripe
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: '2024-06-20',
 });
 
-// 🔐 Webhook secret (you will set this later)
-const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!;
+const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
 export async function POST(req: Request) {
   try {
     const body = await req.text();
-    const signature = headers().get('stripe-signature') as string;
+    const signature = req.headers.get('stripe-signature');
+
+    if (!signature) {
+      return NextResponse.json(
+        { error: 'Missing stripe-signature header' },
+        { status: 400 }
+      );
+    }
 
     let event: Stripe.Event;
 
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err: any) {
-      console.error('❌ Webhook signature verification failed.', err.message);
+      console.error('Webhook signature verification failed:', err.message);
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
     }
 
-    console.log('✅ Webhook received:', event.type);
+    console.log('Stripe webhook received:', event.type);
 
-    // 🎯 Handle events
     switch (event.type) {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
 
         const userId = session.client_reference_id;
-        const plan = session.metadata?.plan;
-        const subscriptionId = session.subscription as string;
-        const customerId = session.customer as string;
+        const plan = session.metadata?.plan ?? 'free';
+        const subscriptionId =
+          typeof session.subscription === 'string'
+            ? session.subscription
+            : session.subscription?.id ?? null;
+        const customerId =
+          typeof session.customer === 'string'
+            ? session.customer
+            : session.customer?.id ?? null;
 
-        if (!userId) break;
+        if (!userId) {
+          break;
+        }
 
-        await db.collection('users').doc(userId).update({
-          subscriptionStatus: plan || 'free',
-          stripeSubscriptionId: subscriptionId,
-          stripeCustomerId: customerId,
-          subscriptionCancelAtPeriodEnd: false,
-          updatedAt: new Date().toISOString(),
-        });
+        await db.collection('users').doc(userId).set(
+          {
+            subscriptionStatus: plan,
+            stripeSubscriptionId: subscriptionId,
+            stripeCustomerId: customerId,
+            subscriptionCancelAtPeriodEnd: false,
+            updatedAt: new Date().toISOString(),
+          },
+          { merge: true }
+        );
 
         break;
       }
@@ -68,25 +102,25 @@ export async function POST(req: Request) {
         const subscription = event.data.object as Stripe.Subscription;
 
         const cancelAtPeriodEnd = subscription.cancel_at_period_end;
-        const currentPeriodEnd = new Date(
-          subscription.current_period_end * 1000
-        ).toISOString();
+        const currentPeriodEnd = subscription.current_period_end
+          ? new Date(subscription.current_period_end * 1000).toISOString()
+          : null;
 
         const customerId =
           typeof subscription.customer === 'string'
             ? subscription.customer
             : subscription.customer.id;
 
-        // 🔎 Find user by stripeCustomerId
-        const users = await db
+        const usersSnapshot = await db
           .collection('users')
           .where('stripeCustomerId', '==', customerId)
           .get();
 
-        for (const docSnap of users.docs) {
+        for (const docSnap of usersSnapshot.docs) {
           await docSnap.ref.update({
             subscriptionCancelAtPeriodEnd: cancelAtPeriodEnd,
             subscriptionCurrentPeriodEnd: currentPeriodEnd,
+            stripeSubscriptionId: subscription.id,
             updatedAt: new Date().toISOString(),
           });
         }
@@ -102,12 +136,12 @@ export async function POST(req: Request) {
             ? subscription.customer
             : subscription.customer.id;
 
-        const users = await db
+        const usersSnapshot = await db
           .collection('users')
           .where('stripeCustomerId', '==', customerId)
           .get();
 
-        for (const docSnap of users.docs) {
+        for (const docSnap of usersSnapshot.docs) {
           await docSnap.ref.update({
             subscriptionStatus: 'free',
             stripeSubscriptionId: null,
@@ -126,16 +160,18 @@ export async function POST(req: Request) {
         const customerId =
           typeof invoice.customer === 'string'
             ? invoice.customer
-            : invoice.customer?.id;
+            : invoice.customer?.id ?? null;
 
-        if (!customerId) break;
+        if (!customerId) {
+          break;
+        }
 
-        const users = await db
+        const usersSnapshot = await db
           .collection('users')
           .where('stripeCustomerId', '==', customerId)
           .get();
 
-        for (const docSnap of users.docs) {
+        for (const docSnap of usersSnapshot.docs) {
           await docSnap.ref.update({
             subscriptionStatus: 'past_due',
             updatedAt: new Date().toISOString(),
@@ -151,7 +187,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ received: true });
   } catch (error: any) {
-    console.error('🔥 Webhook error:', error);
+    console.error('Stripe webhook error:', error);
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
