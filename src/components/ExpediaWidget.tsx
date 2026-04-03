@@ -1,15 +1,21 @@
 'use client';
 
 import { useEffect } from 'react';
-import { trackInitiateCheckout, trackViewContent } from '@/lib/meta-pixel';
+import { trackEvent } from '@/lib/meta-pixel';
 
 export default function ExpediaWidget() {
   useEffect(() => {
-    trackViewContent('Expedia Widget');
+    trackEvent('ViewContent', {
+      content_name: 'Expedia Widget',
+      content_category: 'Travel Booking',
+    });
   }, []);
 
   const handleWidgetIntent = () => {
-    trackInitiateCheckout();
+    trackEvent('InitiateCheckout', {
+      content_name: 'Expedia Widget Click',
+      content_category: 'Travel Booking',
+    });
   };
 
   return (
