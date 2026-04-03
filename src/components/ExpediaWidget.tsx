@@ -90,17 +90,18 @@ export default function ExpediaWidget() {
       try {
         await loadExpediaScript();
 
-        if (cancelled) return;
-
-        const tryInit = () => {
-          if (window.EGWidgets?.init) {
-            window.EGWidgets.init();
-          }
-        };
-
-        tryInit();
-        setTimeout(tryInit, 300);
-        setTimeout(tryInit, 1000);
+// 🔥 CRITICAL FIX: wait for DOM to fully paint
+requestAnimationFrame(() => {
+  setTimeout(() => {
+    if (window.EGWidgets?.init) {
+      try {
+        window.EGWidgets.init();
+      } catch (e) {
+        console.error('Expedia init error:', e);
+      }
+    }
+  }, 200);
+});
       } catch (error) {
         console.error('Expedia widget failed to load:', error);
       }
