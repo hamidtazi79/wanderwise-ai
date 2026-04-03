@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { ItineraryForm } from "./itinerary-form";
 import ExpediaWidget from "@/components/ExpediaWidget";
 
@@ -30,7 +31,9 @@ export default function ItineraryBuilderPage() {
           </div>
 
           <div className="mt-10">
-            <ItineraryForm />
+            <Suspense fallback={<div>Loading form...</div>}>
+              <ItineraryForm />
+            </Suspense>
           </div>
         </div>
 
