@@ -10,57 +10,106 @@ declare global {
   }
 }
 
-export default function ExpediaWidget() {
-  const containerRef = useRef<HTMLDivElement>(null);
+const SCRIPT_ID = 'expedia-eg-widgets-script';
+const SCRIPT_SRC =
+  'https://creator.expediagroup.com/products/widgets/assets/eg-widgets.js';
 
-  useEffect(() => {
-    if (!containerRef.current) return;
-
-    containerRef.current.innerHTML = `
-      <div
-        class="eg-widget"
-        data-widget="search"
-        data-program="us-expedia"
-        data-lobs="stays,flights"
-        data-network="pz"
-        data-camref="101115F9kT"
-        data-pubref=""
-      ></div>
-    `;
-
-    const existingScript = document.querySelector(
-      'script[data-expedia-widget="true"]'
+function loadExpediaScript(): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const existingScript = document.getElementById(
+      SCRIPT_ID
     ) as HTMLScriptElement | null;
 
-    const initWidget = () => {
-      if (window.EGWidgets && typeof window.EGWidgets.init === 'function') {
-        window.EGWidgets.init();
-      }
-    };
-
     if (existingScript) {
-      if (existingScript.getAttribute('data-loaded') === 'true') {
-        initWidget();
-      } else {
-        existingScript.addEventListener('load', initWidget, { once: true });
+      if (existingScript.dataset.loaded === 'true') {
+        resolve();
+        return;
       }
+
+      const handleLoad = () => {
+        existingScript.dataset.loaded = 'true';
+        resolve();
+      };
+
+      const handleError = () => {
+        reject(new Error('Failed to load Expedia widget script.'));
+      };
+
+      existingScript.addEventListener('load', handleLoad, { once: true });
+      existingScript.addEventListener('error', handleError, { once: true });
       return;
     }
 
     const script = document.createElement('script');
-    script.src =
-      'https://creator.expediagroup.com/products/widgets/assets/eg-widgets.js';
+    script.id = SCRIPT_ID;
+    script.src = SCRIPT_SRC;
     script.async = true;
-    script.setAttribute('data-expedia-widget', 'true');
-    script.addEventListener('load', () => {
-      script.setAttribute('data-loaded', 'true');
-      initWidget();
-    });
+
+    script.addEventListener(
+      'load',
+      () => {
+        script.dataset.loaded = 'true';
+        resolve();
+      },
+      { once: true }
+    );
+
+    script.addEventListener(
+      'error',
+      () => {
+        reject(new Error('Failed to load Expedia widget script.'));
+      },
+      { once: true }
+    );
 
     document.body.appendChild(script);
+  });
+}
+
+export default function ExpediaWidget() {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const renderWidget = async () => {
+      if (!containerRef.current) return;
+
+      containerRef.current.innerHTML = `
+        <div
+          class="eg-widget"
+          data-widget="search"
+          data-program="us-expedia"
+          data-lobs="stays,flights"
+          data-network="pz"
+          data-camref="101115F9kT"
+          data-pubref=""
+        ></div>
+      `;
+
+      try {
+        await loadExpediaScript();
+
+        if (cancelled) return;
+
+        const tryInit = () => {
+          if (window.EGWidgets?.init) {
+            window.EGWidgets.init();
+          }
+        };
+
+        tryInit();
+        setTimeout(tryInit, 300);
+        setTimeout(tryInit, 1000);
+      } catch (error) {
+        console.error('Expedia widget failed to load:', error);
+      }
+    };
+
+    renderWidget();
 
     return () => {
-      script.removeEventListener('load', initWidget);
+      cancelled = true;
     };
   }, []);
 
