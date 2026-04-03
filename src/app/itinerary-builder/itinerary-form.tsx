@@ -33,7 +33,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { doc, increment, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { trackEvent } from '@/lib/metaPixel';
+import { trackEvent } from '@/lib/meta-pixel';
 
 const formSchema = z.object({
   destination: z.string().min(2, {
