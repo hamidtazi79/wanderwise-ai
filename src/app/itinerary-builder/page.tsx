@@ -44,9 +44,9 @@ export default function ItineraryBuilderPage() {
               Compare travel options with our Expedia partner widget.
             </p>
 
-            <div className="mt-6">
-              <ExpediaWidget />
-            </div>
+            <div className="mt-6 flex justify-center">
+  <ExpediaWidget />
+</div>
           </div>
         </div>
       </div>
