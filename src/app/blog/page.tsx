@@ -135,6 +135,39 @@ const blogPosts = [
     excerpt:
       'Uncover the mysteries of the pharaohs, from the Pyramids of Giza to the bustling Khan el-Khalili bazaar, in the heart of Egypt.',
   },
+  {
+    id: 9,
+    title: 'Best Time to Visit Morocco: Weather, Seasons, and Travel Tips',
+    author: 'Jane Doe',
+    authorId: 'team-member-1',
+    date: 'April 4, 2026',
+    imageId: 'blog-post-1',
+    imageHint: 'morocco desert',
+    excerpt:
+      'Planning a trip to Morocco? Here is the best time to visit Morocco for cities, desert tours, beaches, and cultural travel, with practical seasonal tips.',
+  },
+  {
+    id: 10,
+    title: '3 Day London Itinerary: What to See, Eat, and Do',
+    author: 'John Smith',
+    authorId: 'team-member-2',
+    date: 'April 4, 2026',
+    imageId: 'blog-post-4',
+    imageHint: 'london city',
+    excerpt:
+      'This 3 day London itinerary covers major landmarks, local food spots, walkable neighborhoods, and practical planning tips for a first trip to London.',
+  },
+  {
+    id: 11,
+    title: 'How to Plan a Trip with AI: Smarter Travel Planning Step by Step',
+    author: 'Jane Doe',
+    authorId: 'team-member-1',
+    date: 'April 4, 2026',
+    imageId: 'blog-post-2',
+    imageHint: 'ai travel planning',
+    excerpt:
+      'Learn how to plan a trip with AI, from choosing a destination to building a personalized itinerary, saving research time, and refining your travel plan faster.',
+  },
 ];
 
 export default function BlogPage() {
