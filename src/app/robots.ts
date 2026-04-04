@@ -1,21 +1,17 @@
-import type { MetadataRoute } from "next";
+import type { MetadataRoute } from 'next';
+
+const SITE_URL = 'https://wanderwise.uk';
 
 export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       {
-        userAgent: "*",
-        allow: "/",
-        disallow: [
-          "/api/",
-          "/dashboard",
-          "/login",
-          "/signup",
-          "/checkout",
-        ],
+        userAgent: '*',
+        allow: '/',
+        disallow: ['/api/', '/dashboard', '/login', '/signup', '/checkout'],
       },
     ],
-    sitemap: "https://wanderwise.uk/sitemap.xml",
-    host: "https://wanderwise.uk",
+    sitemap: `${SITE_URL}/sitemap.xml`,
+    host: SITE_URL,
   };
 }
