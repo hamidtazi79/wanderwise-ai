@@ -271,4 +271,299 @@ export const blogPosts = [
 <p>September to November is another great period. Summer heat starts to ease, and many visitors prefer autumn for trips that include Marrakech, the Atlas Mountains, and Merzouga desert camps. If your goal is a classic Morocco route with riads, souks, and desert sunsets, autumn is a strong choice.</p>
 
 <h2>Summer can be hot but still works for some destinations</h2>
-<p>June to August can be intense in inland cities, especially Marrakech and Fes. However, summer still works well for coastal destinations such as Essaouira, Tangier, and Agadir, where the ocean breeze keeps temperatures more manageable. If you travel in summer, it helps to focus on the coast
+<p>June to August can be intense in inland cities, especially Marrakech and Fes. However, summer still works well for coastal destinations such as Essaouira, Tangier, and Agadir, where the ocean breeze keeps temperatures more manageable. If you travel in summer, it helps to focus on the coast or limit long midday sightseeing sessions.</p>
+
+<h2>Winter is good for lower prices and quieter cities</h2>
+<p>December to February can be a smart time to visit if you prefer fewer crowds and lower accommodation prices. Marrakech and other cities can still be enjoyable in winter, although mornings and evenings can feel cold. Desert nights are especially chilly, so proper layers are important.</p>
+
+<h2>Best season by trip style</h2>
+<ul>
+  <li><strong>For city breaks:</strong> Spring and autumn are usually best.</li>
+  <li><strong>For Sahara desert tours:</strong> Spring and autumn offer the most comfortable temperatures.</li>
+  <li><strong>For surfing and coastal travel:</strong> Late spring, summer, and early autumn can work well.</li>
+  <li><strong>For budget-conscious travel:</strong> Winter often offers better prices.</li>
+</ul>
+
+<h2>Morocco travel tips</h2>
+<p>Plan a route that matches the season. In hot months, spend more time on the coast. In spring or autumn, combine cities, mountains, and the desert more easily. If you want a personalized Morocco trip plan, Wanderwise AI can help you build an itinerary based on your dates, budget, and interests.</p>
+`,
+  },
+  {
+    id: 10,
+    title: '3 Day London Itinerary: What to See, Eat, and Do',
+    author: 'John Smith',
+    authorId: 'team-member-2',
+    date: 'April 4, 2026',
+    imageId: 'blog-post-4',
+    imageHint: 'london city',
+    excerpt:
+      'This 3 day London itinerary covers major landmarks, local food spots, walkable neighborhoods, and practical planning tips for a first trip to London.',
+    content: `
+<p>Planning a short trip to London can feel overwhelming because the city has so much to see. The key is to avoid doing too much in one day and to group attractions by area. This 3 day London itinerary gives you a practical first-timer route with iconic sights, food stops, and neighborhood time.</p>
+
+<h2>Day 1: Westminster, the South Bank, and Covent Garden</h2>
+<p>Start with London’s classic highlights. See Big Ben, the Houses of Parliament, and Westminster Abbey in the morning. Then walk toward St James’s Park or Buckingham Palace if that is on your list. In the afternoon, cross to the South Bank for river views, street performers, and stops around the London Eye area. Finish the evening in Covent Garden for restaurants and a lively atmosphere.</p>
+
+<h2>Day 2: Tower Bridge, the City, and Shoreditch</h2>
+<p>Begin near Tower Bridge and the Tower of London. This part of the city mixes history with impressive skyline views. Later, walk through parts of the City of London or stop at Leadenhall Market. In the evening, head to Shoreditch for casual food, coffee spots, and a more creative side of London.</p>
+
+<h2>Day 3: Museums, Notting Hill, or Camden</h2>
+<p>Your final day depends on your interests. If you love culture, focus on South Kensington with the Natural History Museum, the Victoria and Albert Museum, or the Science Museum. If you prefer neighborhood charm, explore Notting Hill and Portobello Road. If you want a more alternative atmosphere, Camden can be a fun choice.</p>
+
+<h2>Where to eat in London during a short trip</h2>
+<p>London has excellent food variety, so try to mix classics with casual neighborhood spots. You might want a proper pub meal one day, international street food another, and a bakery or brunch stop in between. Borough Market can also be a good option if you want variety without over-planning.</p>
+
+<h2>London travel tips for first-time visitors</h2>
+<ul>
+  <li><strong>Use contactless payment:</strong> It works well on public transport.</li>
+  <li><strong>Group attractions by area:</strong> This saves time and energy.</li>
+  <li><strong>Book major attractions early:</strong> Especially for weekends and holidays.</li>
+  <li><strong>Leave time to wander:</strong> London is best when you mix landmarks with neighborhood exploration.</li>
+</ul>
+
+<h2>Should you use a fixed itinerary?</h2>
+<p>A fixed plan helps, but flexibility makes the trip better. Weather, queues, and energy levels can all change your day. If you want a custom London itinerary based on your travel style, Wanderwise AI can generate one quickly and help you refine it further.</p>
+`,
+  },
+  {
+    id: 11,
+    title: 'How to Plan a Trip with AI: Smarter Travel Planning Step by Step',
+    author: 'Jane Doe',
+    authorId: 'team-member-1',
+    date: 'April 4, 2026',
+    imageId: 'blog-post-2',
+    imageHint: 'ai travel planning',
+    excerpt:
+      'Learn how to plan a trip with AI, from choosing a destination to building a personalized itinerary, saving research time, and refining your travel plan faster.',
+    content: `
+<p>AI travel planning is becoming popular because it helps people organize trips faster. Instead of opening dozens of tabs and comparing scattered advice, you can use AI to structure ideas, suggest routes, and build an itinerary around your budget and interests. The best results usually happen when you use AI as a planning assistant rather than as a blind replacement for judgment.</p>
+
+<h2>Step 1: Start with your trip basics</h2>
+<p>Before using any AI travel planner, define your destination, trip length, rough budget, and travel style. Are you looking for a fast-paced city break, a food-focused trip, a beach holiday, or a family itinerary? The clearer your inputs, the more useful the output becomes.</p>
+
+<h2>Step 2: Use AI to generate a first itinerary draft</h2>
+<p>This is where AI can save the most time. A good AI itinerary builder can suggest a day-by-day structure, highlight neighborhoods, and recommend the order of activities. Instead of starting from nothing, you begin with a useful draft that you can edit.</p>
+
+<h2>Step 3: Refine the trip with follow-up questions</h2>
+<p>Once you have a draft, ask for improvements. You can request a lower budget version, add local food spots, reduce travel time between activities, or make the pace more relaxed. AI works well when you use it interactively and keep refining the plan.</p>
+
+<h2>Step 4: Cross-check practical details</h2>
+<p>AI can help organize ideas, but you should still check practical details such as opening hours, transport schedules, and booking requirements before finalizing your trip. Think of AI as the strategist and yourself as the final editor.</p>
+
+<h2>Step 5: Turn planning into action</h2>
+<p>After refining the itinerary, compare hotels, flights, and activity options. This is where a travel workflow becomes useful: generate the trip, improve it, then compare booking options in one place. That saves time and reduces decision fatigue.</p>
+
+<h2>Why AI travel planning works</h2>
+<ul>
+  <li><strong>It saves research time</strong> by creating a strong starting point.</li>
+  <li><strong>It personalizes recommendations</strong> based on your inputs.</li>
+  <li><strong>It helps you iterate quickly</strong> instead of rebuilding plans from scratch.</li>
+  <li><strong>It reduces overwhelm</strong> when planning larger or more complex trips.</li>
+</ul>
+
+<h2>Use AI as a smart assistant, not a final authority</h2>
+<p>The best way to plan a trip with AI is to combine speed with judgment. Let AI build and improve the structure, then check the practical pieces and adjust based on what matters most to you. If you want to try this approach, Wanderwise AI can help you create and refine a personalized trip plan in minutes.</p>
+`,
+  },
+];
+
+type Props = {
+  params: { id: string };
+};
+
+const SITE_URL = 'https://wanderwise.uk';
+
+function stripHtml(html: string) {
+  return html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+export function generateStaticParams() {
+  return blogPosts.map((post) => ({
+    id: String(post.id),
+  }));
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const post = blogPosts.find((p) => p.id === parseInt(params.id, 10));
+
+  if (!post) {
+    return {
+      title: 'Post Not Found',
+      robots: {
+        index: false,
+        follow: false,
+      },
+    };
+  }
+
+  const postImage = PlaceHolderImages.find((img) => img.id === post.imageId);
+  const description = post.excerpt || stripHtml(post.content).slice(0, 155);
+  const canonicalUrl = `/blog/${post.id}`;
+
+  return {
+    title: post.title,
+    description,
+    keywords: [
+      post.title,
+      'travel blog',
+      'travel guide',
+      'trip planning',
+      'AI travel planner',
+      'Wanderwise AI',
+    ],
+    alternates: {
+      canonical: canonicalUrl,
+    },
+    openGraph: {
+      title: post.title,
+      description,
+      url: `${SITE_URL}${canonicalUrl}`,
+      type: 'article',
+      publishedTime: new Date(post.date).toISOString(),
+      authors: [post.author],
+      images: postImage
+        ? [
+            {
+              url: postImage.imageUrl,
+              alt: post.title,
+            },
+          ]
+        : [],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: post.title,
+      description,
+      images: postImage ? [postImage.imageUrl] : [],
+    },
+  };
+}
+
+export default function BlogPostPage({ params }: { params: { id: string } }) {
+  const post = blogPosts.find((p) => p.id === parseInt(params.id, 10));
+
+  if (!post) {
+    notFound();
+  }
+
+  const authorImage = PlaceHolderImages.find((img) => img.id === post.authorId);
+  const postImage = PlaceHolderImages.find((img) => img.id === post.imageId);
+
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: post.title,
+    description: post.excerpt,
+    author: {
+      '@type': 'Person',
+      name: post.author,
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Wanderwise AI',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${SITE_URL}/icon.png`,
+      },
+    },
+    datePublished: new Date(post.date).toISOString(),
+    dateModified: new Date(post.date).toISOString(),
+    mainEntityOfPage: `${SITE_URL}/blog/${post.id}`,
+    image: postImage ? [postImage.imageUrl] : [],
+  };
+
+  return (
+    <div className="container mx-auto max-w-3xl py-12">
+      <Button asChild variant="link" className="mb-4 pl-0">
+        <Link href="/blog">
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to Blog
+        </Link>
+      </Button>
+
+      <article>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+        />
+
+        {postImage && (
+          <Image
+            src={postImage.imageUrl}
+            alt={post.title}
+            data-ai-hint={postImage.imageHint}
+            width={800}
+            height={450}
+            className="mb-8 rounded-lg object-cover"
+            priority
+          />
+        )}
+
+        <header className="mb-8">
+          <h1 className="font-headline mb-4 text-4xl font-bold tracking-tight">
+            {post.title}
+          </h1>
+
+          <div className="flex items-center gap-4 text-muted-foreground">
+            <div className="flex items-center gap-3">
+              <Avatar>
+                {authorImage && (
+                  <AvatarImage src={authorImage.imageUrl} alt={post.author} />
+                )}
+                <AvatarFallback>{post.author.charAt(0)}</AvatarFallback>
+              </Avatar>
+              <div>
+                <p className="font-semibold text-foreground">{post.author}</p>
+                <p className="text-sm">{post.date}</p>
+              </div>
+            </div>
+          </div>
+
+          <p className="mt-6 text-lg text-muted-foreground">{post.excerpt}</p>
+        </header>
+
+        <div
+          className="prose dark:prose-invert max-w-none"
+          dangerouslySetInnerHTML={{ __html: post.content }}
+        />
+
+        <div className="mt-12 rounded-2xl border p-6">
+          <h2 className="text-2xl font-semibold">Plan Your Own Trip with AI</h2>
+          <p className="mt-3 text-muted-foreground">
+            Use Wanderwise AI to create a personalized itinerary, explore
+            travel ideas, and organize your trip faster.
+          </p>
+
+          <div className="mt-5 flex flex-wrap gap-3">
+            <Link
+              href="/itinerary-builder"
+              className="inline-flex items-center rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
+            >
+              Open Itinerary Builder
+            </Link>
+            <Link
+              href="/ai-chat"
+              className="inline-flex items-center rounded-full border px-5 py-2.5 text-sm font-semibold transition hover:border-sky-500 hover:text-sky-500"
+            >
+              Ask the AI Travel Assistant
+            </Link>
+          </div>
+        </div>
+
+        <nav className="mt-10 border-t pt-6">
+          <div className="flex flex-wrap gap-4 text-sm">
+            <Link href="/blog" className="font-medium hover:underline">
+              More travel guides
+            </Link>
+            <Link href="/pricing" className="font-medium hover:underline">
+              View pricing
+            </Link>
+            <Link href="/" className="font-medium hover:underline">
+              Back to homepage
+            </Link>
+          </div>
+        </nav>
+      </article>
+    </div>
+  );
+}
