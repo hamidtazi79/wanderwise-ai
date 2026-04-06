@@ -1,5 +1,5 @@
 import type { MetadataRoute } from 'next';
-import { blogPosts } from '@/app/blog/[id]/page';
+import { blogPosts } from '@/app/blog/[slug]/page';
 
 const SITE_URL = 'https://wanderwise.uk';
 
@@ -40,7 +40,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   ];
 
   const blogPostRoutes: MetadataRoute.Sitemap = blogPosts.map((post) => ({
-    url: `${SITE_URL}/blog/${post.id}`,
+    url: `${SITE_URL}/blog/${post.slug}`,
     lastModified: new Date(post.date),
     changeFrequency: 'monthly',
     priority: 0.7,
