@@ -168,6 +168,17 @@ const blogPosts = [
     excerpt:
       'Learn how to plan a trip with AI, from choosing a destination to building a personalized itinerary, saving research time, and refining your travel plan faster.',
   },
+  {
+  id: 999,
+  title: "Best Hotels in Paris: Where to Stay (Luxury, Budget & Central Areas)",
+  author: "Wanderwise AI",
+  authorId: "team-member-1",
+  date: "April 6, 2026",
+  imageId: "blog-post-4", // reuse any existing image
+  imageHint: "paris hotel",
+  excerpt:
+    "Discover the best hotels in Paris, from luxury stays near the Eiffel Tower to budget-friendly options in central neighborhoods.",
+},
 ];
 
 export default function BlogPage() {
