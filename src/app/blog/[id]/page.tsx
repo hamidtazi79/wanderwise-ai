@@ -10,6 +10,7 @@ import type { Metadata } from 'next';
 export const blogPosts = [
   {
     id: 1,
+    slug: 'top-10-hidden-gems-in-southeast-asia',
     title: 'Top 10 Hidden Gems in Southeast Asia',
     author: 'Jane Doe',
     authorId: 'team-member-1',
@@ -33,6 +34,7 @@ export const blogPosts = [
   },
   {
     id: 2,
+    slug: 'how-ai-is-revolutionizing-your-travel-planning',
     title: 'How AI is Revolutionizing Your Travel Planning',
     author: 'John Smith',
     authorId: 'team-member-2',
@@ -53,6 +55,7 @@ export const blogPosts = [
   },
   {
     id: 3,
+    slug: 'a-foodies-guide-to-street-food-in-mexico-city',
     title: "A Foodie's Guide to Street Food in Mexico City",
     author: 'Jane Doe',
     authorId: 'team-member-1',
@@ -73,6 +76,7 @@ export const blogPosts = [
   },
   {
     id: 4,
+    slug: 'paris-france-the-ultimate-cultural-getaway',
     title: 'Paris, France: The Ultimate Cultural Getaway',
     author: 'John Smith',
     authorId: 'team-member-2',
@@ -109,6 +113,7 @@ export const blogPosts = [
   },
   {
     id: 5,
+    slug: 'a-journey-through-time-in-rome-italy',
     title: 'A Journey Through Time in Rome, Italy',
     author: 'Jane Doe',
     authorId: 'team-member-1',
@@ -145,6 +150,7 @@ export const blogPosts = [
   },
   {
     id: 6,
+    slug: 'kyoto-japan-a-serene-escape-into-tradition',
     title: 'Kyoto, Japan: A Serene Escape into Tradition',
     author: 'John Smith',
     authorId: 'team-member-2',
@@ -181,6 +187,7 @@ export const blogPosts = [
   },
   {
     id: 7,
+    slug: 'lisbon-portugal-the-vibrant-coastal-capital',
     title: 'Lisbon, Portugal: The Vibrant Coastal Capital',
     author: 'Jane Doe',
     authorId: 'team-member-1',
@@ -217,6 +224,7 @@ export const blogPosts = [
   },
   {
     id: 8,
+    slug: 'cairo-egypt-gateway-to-ancient-wonders',
     title: 'Cairo, Egypt: Gateway to Ancient Wonders',
     author: 'John Smith',
     authorId: 'team-member-2',
@@ -253,6 +261,7 @@ export const blogPosts = [
   },
   {
     id: 9,
+    slug: 'best-time-to-visit-morocco-weather-seasons-and-travel-tips',
     title: 'Best Time to Visit Morocco: Weather, Seasons, and Travel Tips',
     author: 'Jane Doe',
     authorId: 'team-member-1',
@@ -290,6 +299,7 @@ export const blogPosts = [
   },
   {
     id: 10,
+    slug: '3-day-london-itinerary-what-to-see-eat-and-do',
     title: '3 Day London Itinerary: What to See, Eat, and Do',
     author: 'John Smith',
     authorId: 'team-member-2',
@@ -327,6 +337,7 @@ export const blogPosts = [
   },
   {
     id: 11,
+    slug: 'how-to-plan-a-trip-with-ai-smarter-travel-planning-step-by-step',
     title: 'How to Plan a Trip with AI: Smarter Travel Planning Step by Step',
     author: 'Jane Doe',
     authorId: 'team-member-1',
@@ -366,7 +377,8 @@ export const blogPosts = [
 `,
   },
   {
-    id: 999,
+    id: 12,
+    slug: 'best-hotels-in-paris',
     title: 'Best Hotels in Paris: Where to Stay (Luxury, Budget & Central Areas)',
     author: 'Wanderwise AI',
     authorId: 'team-member-1',
@@ -375,6 +387,8 @@ export const blogPosts = [
     imageHint: 'paris hotel',
     excerpt:
       'Discover the best hotels in Paris, from luxury stays near the Eiffel Tower to budget-friendly options in central neighborhoods.',
+    expediaUrl:
+      'https://www.expedia.co.uk/shop/wanderwiseai/best-hotels-in-paris',
     content: `
 <p>Paris has no shortage of places to stay, but choosing the right area and hotel can make a huge difference to your trip. Some travelers want luxury with Eiffel Tower views, others want a stylish boutique hotel near the best cafés, and many simply want a practical central base with easy transport. This guide covers some of the best hotels in Paris for different budgets and travel styles.</p>
 
@@ -401,14 +415,14 @@ export const blogPosts = [
   <li><strong>Compare total value:</strong> Breakfast, cancellation policy, and room size can matter more than headline price.</li>
 </ul>
 
-<h2>Plan your Paris trip smarter</h2>
-<p>Once you have an area in mind, the next step is matching your hotel with your itinerary. Wanderwise AI can help you build a personalized Paris plan, then compare hotels and travel options that fit your budget and style.</p>
+<h2>Book Paris hotels</h2>
+<p>If you want to compare current hotel options in Paris, you can use our Expedia hotel collection to browse stays by area and style.</p>
 `,
   },
 ];
 
 type Props = {
-  params: { id: string };
+  params: { slug: string };
 };
 
 const SITE_URL = 'https://wanderwise.uk';
@@ -419,12 +433,12 @@ function stripHtml(html: string) {
 
 export function generateStaticParams() {
   return blogPosts.map((post) => ({
-    id: String(post.id),
+    slug: post.slug,
   }));
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post = blogPosts.find((p) => p.id === parseInt(params.id, 10));
+  const post = blogPosts.find((p) => p.slug === params.slug);
 
   if (!post) {
     return {
@@ -438,7 +452,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
   const postImage = PlaceHolderImages.find((img) => img.id === post.imageId);
   const description = post.excerpt || stripHtml(post.content).slice(0, 155);
-  const canonicalUrl = `/blog/${post.id}`;
+  const canonicalUrl = `/blog/${post.slug}`;
 
   return {
     title: post.title,
@@ -479,8 +493,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function BlogPostPage({ params }: { params: { id: string } }) {
-  const post = blogPosts.find((p) => p.id === parseInt(params.id, 10));
+export default function BlogPostPage({ params }: Props) {
+  const post = blogPosts.find((p) => p.slug === params.slug);
 
   if (!post) {
     notFound();
@@ -508,7 +522,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
     },
     datePublished: new Date(post.date).toISOString(),
     dateModified: new Date(post.date).toISOString(),
-    mainEntityOfPage: `${SITE_URL}/blog/${post.id}`,
+    mainEntityOfPage: `${SITE_URL}/blog/${post.slug}`,
     image: postImage ? [postImage.imageUrl] : [],
   };
 
@@ -531,7 +545,7 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
           <Image
             src={postImage.imageUrl}
             alt={post.title}
-            data-ai-hint={postImage.imageHint}
+            data-ai-hint={post.imageHint}
             width={800}
             height={450}
             className="mb-8 rounded-lg object-cover"
@@ -566,6 +580,27 @@ export default function BlogPostPage({ params }: { params: { id: string } }) {
           className="prose dark:prose-invert max-w-none"
           dangerouslySetInnerHTML={{ __html: post.content }}
         />
+
+        {post.slug === 'best-hotels-in-paris' && (
+          <div className="mt-8 rounded-2xl border p-6">
+            <h2 className="text-2xl font-semibold">Compare Hotels in Paris</h2>
+            <p className="mt-3 text-muted-foreground">
+              Browse our Expedia Paris hotel collection to compare luxury,
+              budget, and centrally located stays.
+            </p>
+
+            <div className="mt-5">
+              <a
+                href="https://www.expedia.co.uk/shop/wanderwiseai/best-hotels-in-paris"
+                target="_blank"
+                rel="noopener noreferrer sponsored"
+                className="inline-flex items-center rounded-full bg-sky-500 px-5 py-2.5 text-sm font-semibold text-slate-950 transition hover:bg-sky-400"
+              >
+                View Paris Hotels on Expedia
+              </a>
+            </div>
+          </div>
+        )}
 
         <div className="mt-12 rounded-2xl border p-6">
           <h2 className="text-2xl font-semibold">Plan Your Own Trip with AI</h2>
