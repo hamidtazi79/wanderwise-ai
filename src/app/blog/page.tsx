@@ -49,6 +49,7 @@ export const metadata: Metadata = {
 const blogPosts = [
   {
     id: 1,
+    slug: 'top-10-hidden-gems-in-southeast-asia',
     title: 'Top 10 Hidden Gems in Southeast Asia',
     author: 'Jane Doe',
     authorId: 'team-member-1',
@@ -60,6 +61,7 @@ const blogPosts = [
   },
   {
     id: 2,
+    slug: 'how-ai-is-revolutionizing-your-travel-planning',
     title: 'How AI is Revolutionizing Your Travel Planning',
     author: 'John Smith',
     authorId: 'team-member-2',
@@ -71,6 +73,7 @@ const blogPosts = [
   },
   {
     id: 3,
+    slug: 'a-foodies-guide-to-street-food-in-mexico-city',
     title: "A Foodie's Guide to Street Food in Mexico City",
     author: 'Jane Doe',
     authorId: 'team-member-1',
@@ -82,6 +85,7 @@ const blogPosts = [
   },
   {
     id: 4,
+    slug: 'paris-france-the-ultimate-cultural-getaway',
     title: 'Paris, France: The Ultimate Cultural Getaway',
     author: 'John Smith',
     authorId: 'team-member-2',
@@ -93,6 +97,7 @@ const blogPosts = [
   },
   {
     id: 5,
+    slug: 'a-journey-through-time-in-rome-italy',
     title: 'A Journey Through Time in Rome, Italy',
     author: 'Jane Doe',
     authorId: 'team-member-1',
@@ -104,6 +109,7 @@ const blogPosts = [
   },
   {
     id: 6,
+    slug: 'kyoto-japan-a-serene-escape-into-tradition',
     title: 'Kyoto, Japan: A Serene Escape into Tradition',
     author: 'John Smith',
     authorId: 'team-member-2',
@@ -115,6 +121,7 @@ const blogPosts = [
   },
   {
     id: 7,
+    slug: 'lisbon-portugal-the-vibrant-coastal-capital',
     title: 'Lisbon, Portugal: The Vibrant Coastal Capital',
     author: 'Jane Doe',
     authorId: 'team-member-1',
@@ -126,6 +133,7 @@ const blogPosts = [
   },
   {
     id: 8,
+    slug: 'cairo-egypt-gateway-to-ancient-wonders',
     title: 'Cairo, Egypt: Gateway to Ancient Wonders',
     author: 'John Smith',
     authorId: 'team-member-2',
@@ -137,6 +145,7 @@ const blogPosts = [
   },
   {
     id: 9,
+    slug: 'best-time-to-visit-morocco-weather-seasons-and-travel-tips',
     title: 'Best Time to Visit Morocco: Weather, Seasons, and Travel Tips',
     author: 'Jane Doe',
     authorId: 'team-member-1',
@@ -148,6 +157,7 @@ const blogPosts = [
   },
   {
     id: 10,
+    slug: '3-day-london-itinerary-what-to-see-eat-and-do',
     title: '3 Day London Itinerary: What to See, Eat, and Do',
     author: 'John Smith',
     authorId: 'team-member-2',
@@ -159,6 +169,7 @@ const blogPosts = [
   },
   {
     id: 11,
+    slug: 'how-to-plan-a-trip-with-ai-smarter-travel-planning-step-by-step',
     title: 'How to Plan a Trip with AI: Smarter Travel Planning Step by Step',
     author: 'Jane Doe',
     authorId: 'team-member-1',
@@ -169,16 +180,17 @@ const blogPosts = [
       'Learn how to plan a trip with AI, from choosing a destination to building a personalized itinerary, saving research time, and refining your travel plan faster.',
   },
   {
-  id: 999,
-  title: "Best Hotels in Paris: Where to Stay (Luxury, Budget & Central Areas)",
-  author: "Wanderwise AI",
-  authorId: "team-member-1",
-  date: "April 6, 2026",
-  imageId: "blog-post-4", // reuse any existing image
-  imageHint: "paris hotel",
-  excerpt:
-    "Discover the best hotels in Paris, from luxury stays near the Eiffel Tower to budget-friendly options in central neighborhoods.",
-},
+    id: 12,
+    slug: 'best-hotels-in-paris',
+    title: 'Best Hotels in Paris: Where to Stay (Luxury, Budget & Central Areas)',
+    author: 'Wanderwise AI',
+    authorId: 'team-member-1',
+    date: 'April 6, 2026',
+    imageId: 'blog-post-4',
+    imageHint: 'paris hotel',
+    excerpt:
+      'Discover the best hotels in Paris, from luxury stays near the Eiffel Tower to budget-friendly options in central neighborhoods.',
+  },
 ];
 
 export default function BlogPage() {
@@ -192,7 +204,7 @@ export default function BlogPage() {
     blogPost: blogPosts.map((post) => ({
       '@type': 'BlogPosting',
       headline: post.title,
-      url: `${SITE_URL}/blog/${post.id}`,
+      url: `${SITE_URL}/blog/${post.slug}`,
       datePublished: new Date(post.date).toISOString(),
       author: {
         '@type': 'Person',
@@ -253,12 +265,12 @@ export default function BlogPage() {
           );
 
           return (
-            <Card key={post.id} className="flex flex-col">
+            <Card key={post.slug} className="flex flex-col">
               {postImage && (
                 <Image
                   src={postImage.imageUrl}
                   alt={post.title}
-                  data-ai-hint={postImage.imageHint}
+                  data-ai-hint={post.imageHint}
                   width={600}
                   height={400}
                   className="rounded-t-lg object-cover"
@@ -287,7 +299,7 @@ export default function BlogPage() {
                 </div>
 
                 <Button asChild variant="link">
-                  <Link href={`/blog/${post.id}`}>Read More</Link>
+                  <Link href={`/blog/${post.slug}`}>Read More</Link>
                 </Button>
               </CardFooter>
             </Card>
