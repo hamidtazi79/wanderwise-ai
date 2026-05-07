@@ -1,5 +1,5 @@
-
 'use client';
+
 import { AuthForm } from '@/components/auth-form';
 import {
   Card,
@@ -12,17 +12,27 @@ import Link from 'next/link';
 
 export default function SignupPage() {
   return (
-    <div className="container mx-auto flex min-h-[calc(100vh-8rem)] items-center justify-center py-12">
-      <Card className="w-full max-w-sm">
+    <div className="container mx-auto flex min-h-[calc(100vh-8rem)] items-center justify-center px-4 py-12">
+      <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle>Create an Account</CardTitle>
+          <CardTitle className="text-2xl">
+            Save your trip in 10 seconds
+          </CardTitle>
+
           <CardDescription>
-            Join Wanderwise AI to start planning your perfect trips.
+            Create a free account to save, edit, and access your itinerary anytime.
           </CardDescription>
         </CardHeader>
+
         <CardContent>
           <AuthForm mode="signup" />
-           <p className="mt-4 text-center text-sm text-muted-foreground">
+
+          <div className="mt-4 space-y-1 text-center text-xs text-muted-foreground">
+            <p>✅ No credit card required</p>
+            <p>🔒 No spam, ever</p>
+          </div>
+
+          <p className="mt-5 text-center text-sm text-muted-foreground">
             Already have an account?{' '}
             <Link href="/login" className="font-medium text-primary hover:underline">
               Log in
