@@ -7,7 +7,6 @@ import Footer from '@/components/footer';
 import { Toaster } from '@/components/ui/toaster';
 import { FirebaseProvider } from '@/firebase/provider';
 import ClientTrackingShell from './ClientTrackingShell';
-import MetaPixel from '@/components/MetaPixel';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -101,11 +100,6 @@ export default function RootLayout({
     url: 'https://wanderwise.uk',
     description:
       'Wanderwise AI is an AI travel planner and itinerary generator that helps users build smarter trips with personalized recommendations.',
-    potentialAction: {
-      '@type': 'SearchAction',
-      target: 'https://wanderwise.uk/ai-chat?q={search_term_string}',
-      'query-input': 'required name=search_term_string',
-    },
     inLanguage: 'en-GB',
   };
 
@@ -123,29 +117,11 @@ export default function RootLayout({
       price: '0',
       priceCurrency: 'USD',
     },
-    featureList: [
-      'AI itinerary generation',
-      'Personalized trip planning',
-      'Travel recommendations',
-      'AI travel chat',
-      'Budget-based travel suggestions',
-    ],
-  };
-
-  const organizationSchema = {
-    '@context': 'https://schema.org',
-    '@type': 'Organization',
-    name: 'Wanderwise AI',
-    url: 'https://wanderwise.uk',
-    logo: 'https://wanderwise.uk/icon.png',
-    sameAs: [],
   };
 
   return (
     <html lang="en" className={`${inter.variable} h-full`}>
       <body className="h-full font-body antialiased">
-        <MetaPixel />
-
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
@@ -153,10 +129,6 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareSchema) }}
-        />
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
 
         <FirebaseProvider>
