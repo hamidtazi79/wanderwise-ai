@@ -31,6 +31,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Loader2 } from 'lucide-react';
 
+function getRedirectPath() {
+  if (typeof window === 'undefined') return '/dashboard';
+  return new URLSearchParams(window.location.search).get('redirect') || '/dashboard';
+}
+
 function getCookie(name: string) {
   if (typeof document === 'undefined') return '';
   const match = document.cookie.match(new RegExp('(^|; )' + name + '=([^;]*)'));
@@ -47,9 +52,7 @@ async function sendMetaCompleteRegistration(
 
     await fetch('/api/meta-complete-registration', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         email,
         signup_method: signupMethod,
@@ -208,14 +211,14 @@ export function AuthForm({ mode }: AuthFormProps) {
         trackSignup('email');
         await sendMetaCompleteRegistration(signupData.email, 'email');
 
-        router.push('/dashboard');
+        router.push(getRedirectPath());
         return;
       }
 
       const loginData = data as z.infer<typeof loginSchema>;
-
       await signInWithEmailAndPassword(auth, loginData.email, loginData.password);
-      router.push('/dashboard');
+
+      router.push(getRedirectPath());
     } catch (error: any) {
       toast({
         title: mode === 'signup' ? 'Sign Up Failed' : 'Login Failed',
@@ -245,7 +248,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       const result = await signInWithPopup(auth, provider);
       const isNewProfile = await createProfileIfNotExists(result.user, firestore);
 
-      if (mode === 'signup' && isNewProfile) {
+      if (isNewProfile) {
         trackSignup('google');
 
         if (result.user.email) {
@@ -253,7 +256,7 @@ export function AuthForm({ mode }: AuthFormProps) {
         }
       }
 
-      router.push('/dashboard');
+      router.push(getRedirectPath());
     } catch (error: any) {
       if (error.code !== 'auth/popup-closed-by-user') {
         console.error('Google sign-in error', error);
@@ -280,11 +283,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 <FormItem>
                   <FormLabel>Full Name</FormLabel>
                   <FormControl>
-                    <Input
-                      placeholder="Your name"
-                      {...field}
-                      disabled={isLoading || isGoogleLoading}
-                    />
+                    <Input placeholder="Your name" {...field} disabled={isLoading || isGoogleLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -299,13 +298,7 @@ export function AuthForm({ mode }: AuthFormProps) {
               <FormItem>
                 <FormLabel>Email</FormLabel>
                 <FormControl>
-                  <Input
-                    type="email"
-                    placeholder="you@example.com"
-                    {...field}
-                    autoComplete="email"
-                    disabled={isLoading || isGoogleLoading}
-                  />
+                  <Input type="email" placeholder="you@example.com" {...field} autoComplete="email" disabled={isLoading || isGoogleLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -319,13 +312,7 @@ export function AuthForm({ mode }: AuthFormProps) {
               <FormItem>
                 <FormLabel>Password</FormLabel>
                 <FormControl>
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    {...field}
-                    autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-                    disabled={isLoading || isGoogleLoading}
-                  />
+                  <Input type="password" placeholder="••••••••" {...field} autoComplete={mode === 'login' ? 'current-password' : 'new-password'} disabled={isLoading || isGoogleLoading} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -340,13 +327,7 @@ export function AuthForm({ mode }: AuthFormProps) {
                 <FormItem>
                   <FormLabel>Confirm Password</FormLabel>
                   <FormControl>
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      {...field}
-                      autoComplete="new-password"
-                      disabled={isLoading || isGoogleLoading}
-                    />
+                    <Input type="password" placeholder="••••••••" {...field} autoComplete="new-password" disabled={isLoading || isGoogleLoading} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -354,11 +335,7 @@ export function AuthForm({ mode }: AuthFormProps) {
             />
           )}
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={isLoading || isGoogleLoading}
-          >
+          <Button type="submit" className="w-full" disabled={isLoading || isGoogleLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {mode === 'login' ? 'Log In' : 'Create My Free Account'}
           </Button>
@@ -366,13 +343,7 @@ export function AuthForm({ mode }: AuthFormProps) {
       </Form>
 
       {mode === 'login' && (
-        <Button
-          variant="link"
-          size="sm"
-          onClick={handlePasswordReset}
-          className="px-0"
-          disabled={isLoading || isGoogleLoading}
-        >
+        <Button variant="link" size="sm" onClick={handlePasswordReset} className="px-0" disabled={isLoading || isGoogleLoading}>
           Forgot password?
         </Button>
       )}
@@ -388,17 +359,8 @@ export function AuthForm({ mode }: AuthFormProps) {
         </div>
       </div>
 
-      <Button
-        onClick={handleGoogleSignIn}
-        disabled={isGoogleLoading || isLoading}
-        className="w-full"
-        variant="outline"
-      >
-        {isGoogleLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-        ) : (
-          <GoogleIcon />
-        )}
+      <Button onClick={handleGoogleSignIn} disabled={isGoogleLoading || isLoading} className="w-full" variant="outline">
+        {isGoogleLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <GoogleIcon />}
         Continue with Google
       </Button>
     </div>
