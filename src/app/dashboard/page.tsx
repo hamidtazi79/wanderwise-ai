@@ -23,6 +23,9 @@ import {
   Award,
   Calendar,
   Repeat,
+  MapPin,
+  ArrowRight,
+  Clock,
 } from 'lucide-react';
 import {
   useFirestore,
@@ -58,6 +61,21 @@ import { format, addMonths, addYears } from 'date-fns';
 import { useState } from 'react';
 import { cancelStripeSubscriptionAtPeriodEnd } from './actions';
 
+function getDestinationImage(destination?: string) {
+  const query = encodeURIComponent(`${destination || 'travel'} destination`);
+  return `https://source.unsplash.com/900x600/?${query}`;
+}
+
+function formatTripDate(createdAt?: string) {
+  if (!createdAt) return 'Recently saved';
+
+  try {
+    return format(new Date(createdAt), 'MMM dd, yyyy');
+  } catch {
+    return 'Recently saved';
+  }
+}
+
 function ItinerariesList({ pageSize }: { pageSize?: number }) {
   const { user } = useUser();
   const firestore = useFirestore();
@@ -79,15 +97,14 @@ function ItinerariesList({ pageSize }: { pageSize?: number }) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
         {[...Array(pageSize || 3)].map((_, i) => (
-          <Card key={i}>
-            <CardContent className="flex items-center justify-between p-4">
-              <div>
-                <Skeleton className="mb-2 h-5 w-32" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-              <Skeleton className="h-10 w-20" />
+          <Card key={i} className="overflow-hidden">
+            <Skeleton className="h-36 w-full" />
+            <CardContent className="space-y-3 p-4">
+              <Skeleton className="h-5 w-32" />
+              <Skeleton className="h-4 w-24" />
+              <Skeleton className="h-9 w-full" />
             </CardContent>
           </Card>
         ))}
@@ -97,12 +114,19 @@ function ItinerariesList({ pageSize }: { pageSize?: number }) {
 
   if (!itineraries || itineraries.length === 0) {
     return (
-      <div className="flex h-48 flex-col items-center justify-center rounded-lg border-2 border-dashed bg-muted/50 text-center">
+      <div className="flex min-h-64 flex-col items-center justify-center rounded-3xl border-2 border-dashed bg-muted/40 px-6 py-10 text-center">
+        <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-sky-500/10 text-sky-500">
+          <Sparkles className="h-7 w-7" />
+        </div>
+
         <h3 className="text-xl font-semibold">No Saved Trips Yet</h3>
-        <p className="mt-2 text-muted-foreground">
-          Your generated itineraries will appear here.
+
+        <p className="mt-2 max-w-md text-sm text-muted-foreground">
+          Generate your first AI itinerary and save it here as a visual travel
+          card.
         </p>
-        <Button asChild className="mt-4">
+
+        <Button asChild className="mt-5">
           <Link href="/itinerary-builder">Create Your First Itinerary</Link>
         </Button>
       </div>
@@ -110,22 +134,60 @@ function ItinerariesList({ pageSize }: { pageSize?: number }) {
   }
 
   return (
-    <div className="space-y-4">
-      {itineraries.map((itinerary: any) => (
-        <Card key={itinerary.id} className="transition-shadow hover:shadow-md">
-          <CardContent className="flex items-center justify-between p-4">
-            <div>
-              <h3 className="text-lg font-semibold">{itinerary.destination}</h3>
-              <p className="text-sm text-muted-foreground">
-                {itinerary.duration} days, {itinerary.budget} budget
-              </p>
+    <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {itineraries.map((itinerary: any) => {
+        const imageUrl = getDestinationImage(itinerary.destination);
+
+        return (
+          <Card
+            key={itinerary.id}
+            className="group overflow-hidden border-slate-800/60 transition hover:-translate-y-1 hover:shadow-xl"
+          >
+            <div
+              className="relative h-40 bg-cover bg-center"
+              style={{
+                backgroundImage: `linear-gradient(to bottom, rgba(2, 6, 23, 0.15), rgba(2, 6, 23, 0.85)), url(${imageUrl})`,
+              }}
+            >
+              <div className="absolute inset-x-0 bottom-0 p-4 text-white">
+                <div className="flex items-center gap-2 text-xs text-slate-200">
+                  <MapPin className="h-3.5 w-3.5" />
+                  <span>{itinerary.destination}</span>
+                </div>
+
+                <h3 className="mt-1 line-clamp-1 text-xl font-bold">
+                  {itinerary.destination}
+                </h3>
+              </div>
             </div>
-            <Button asChild variant="outline">
-              <Link href={`/itinerary/${itinerary.id}`}>View</Link>
-            </Button>
-          </CardContent>
-        </Card>
-      ))}
+
+            <CardContent className="space-y-4 p-4">
+              <div className="flex flex-wrap gap-2">
+                <span className="inline-flex items-center rounded-full bg-sky-500/10 px-3 py-1 text-xs font-medium text-sky-500">
+                  <Calendar className="mr-1 h-3.5 w-3.5" />
+                  {itinerary.duration} days
+                </span>
+
+                <span className="inline-flex items-center rounded-full bg-muted px-3 py-1 text-xs font-medium capitalize text-muted-foreground">
+                  {itinerary.budget} budget
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Clock className="h-3.5 w-3.5" />
+                <span>{formatTripDate(itinerary.createdAt)}</span>
+              </div>
+
+              <Button asChild className="w-full">
+                <Link href={`/itinerary/${itinerary.id}`}>
+                  Open Trip
+                  <ArrowRight className="ml-2 h-4 w-4 transition group-hover:translate-x-1" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        );
+      })}
     </div>
   );
 }
@@ -411,51 +473,47 @@ function OverviewTab({
   return (
     <div className="space-y-8">
       <div className="grid gap-6 lg:grid-cols-3">
-        <Card className="lg:col-span-2">
+        <Card className="overflow-hidden border-sky-500/20 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 text-white lg:col-span-2">
           <CardHeader>
             {isSubscribed ? (
               <div>
-                <h2 className="text-2xl font-bold">
+                <p className="text-sm font-semibold uppercase tracking-wide text-sky-300">
+                  Premium travel workspace
+                </p>
+                <h2 className="mt-2 text-2xl font-bold">
                   Welcome back,{' '}
-                  <span className="text-primary">
+                  <span className="text-sky-300">
                     {userProfile?.displayName || 'Explorer'}
                   </span>
                   !
                 </h2>
-                <p className="mt-1 text-muted-foreground">
-                  Your premium adventure awaits. Ready to plan your next trip?
+                <p className="mt-2 text-slate-300">
+                  Your saved trips, AI planning tools, and travel ideas are ready.
                 </p>
               </div>
             ) : (
               <div>
-                <h2 className="text-2xl font-bold">
-                  Unlock Your Ultimate Travel Companion
+                <p className="text-sm font-semibold uppercase tracking-wide text-sky-300">
+                  Free travel planning
+                </p>
+                <h2 className="mt-2 text-2xl font-bold">
+                  Turn your next trip idea into a real itinerary
                 </h2>
-                <p className="mt-1 text-muted-foreground">
-                  Upgrade to Wanderwise AI Premium for unlimited itineraries,
-                  trip saving, and more.
+                <p className="mt-2 text-slate-300">
+                  Generate a trip for free, preview the plan, and save it when
+                  you are ready.
                 </p>
               </div>
             )}
           </CardHeader>
 
           <CardFooter>
-            {isSubscribed ? (
-              <Button asChild>
-                <Link href="/itinerary-builder">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  Create a New Itinerary
-                </Link>
-              </Button>
-            ) : (
-              <Button
-                asChild
-                size="lg"
-                className="bg-accent text-accent-foreground hover:bg-accent/90"
-              >
-                <Link href="/pricing">Upgrade to Premium</Link>
-              </Button>
-            )}
+            <Button asChild className="bg-sky-400 text-slate-950 hover:bg-sky-300">
+              <Link href="/itinerary-builder">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Create a New Itinerary
+              </Link>
+            </Button>
           </CardFooter>
         </Card>
 
@@ -473,8 +531,8 @@ function OverviewTab({
               {isSubscribed
                 ? userProfile?.subscriptionCancelAtPeriodEnd
                   ? 'Cancellation scheduled at period end'
-                  : 'Thank you for your support!'
-                : 'Upgrade for premium features'}
+                  : 'Premium features active'
+                : 'Free planning mode'}
             </p>
           </CardContent>
         </Card>
@@ -531,12 +589,12 @@ function OverviewTab({
         </Card>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-6 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
             <CardTitle>Recent Itineraries</CardTitle>
             <CardDescription>
-              Your latest adventures are just a click away.
+              Your latest saved trips, now shown as visual travel cards.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -620,7 +678,7 @@ export default function DashboardPage() {
                 Access and manage all your saved travel plans.
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent>
               <ItinerariesList />
             </CardContent>
           </Card>
