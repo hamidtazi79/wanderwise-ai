@@ -24,7 +24,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Loader2, Sparkles, TriangleAlert, UserPlus } from 'lucide-react';
+import { Loader2, Sparkles, TriangleAlert } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
 import { useFirestore, useUser, useMemoFirebase } from '@/firebase/provider';
@@ -75,8 +75,7 @@ export function ItineraryForm() {
   const isSubscribed = userProfile?.subscriptionStatus !== 'free';
   const itinerariesGenerated = userProfile?.itinerariesGenerated || 0;
   const isGenerationDisabled =
-    !isSubscribed && itinerariesGenerated >= FREE_ITINERARY_LIMIT;
-  const isGuest = !user;
+    !!user && !isSubscribed && itinerariesGenerated >= FREE_ITINERARY_LIMIT;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -102,14 +101,6 @@ export function ItineraryForm() {
   }, []);
 
   async function onSubmit(values: FormValues) {
-    if (isGuest) {
-      trackEvent('CompleteRegistration', {
-        content_name: 'Signup Redirect From Itinerary Builder Submit',
-      });
-      router.push('/signup');
-      return;
-    }
-
     if (isGenerationDisabled) {
       setError(
         'You have reached your free itinerary generation limit. Please upgrade to continue.'
@@ -121,26 +112,27 @@ export function ItineraryForm() {
     setError(null);
 
     try {
-      if (userProfile && !isSubscribed && userProfileRef) {
-        await updateDoc(userProfileRef, {
-          itinerariesGenerated: increment(1),
-        });
-
-        toast({
-          title: 'Free Itinerary Generated',
-          description: `You have used ${itinerariesGenerated + 1} of your ${FREE_ITINERARY_LIMIT} free generations.`,
-        });
-      }
-
       const result = await generateSmartItinerary(values);
       const resultId = `itinerary_${Date.now()}`;
 
       const storedData = {
         ...values,
         generatedItinerary: JSON.stringify(result),
+        createdAsGuest: !user,
       };
 
       sessionStorage.setItem(resultId, JSON.stringify(storedData));
+
+      if (user && userProfile && !isSubscribed && userProfileRef) {
+        await updateDoc(userProfileRef, {
+          itinerariesGenerated: increment(1),
+        });
+
+        toast({
+          title: 'Itinerary Generated',
+          description: `You have used ${itinerariesGenerated + 1} of your ${FREE_ITINERARY_LIMIT} free generations.`,
+        });
+      }
 
       trackEvent('ViewContent', {
         content_name: 'Itinerary Generated',
@@ -148,6 +140,7 @@ export function ItineraryForm() {
         destination: values.destination,
         budget: values.budget,
         duration: values.duration,
+        user_type: user ? 'logged_in' : 'guest',
       });
 
       router.push(`/itinerary/result?id=${resultId}`);
@@ -159,7 +152,7 @@ export function ItineraryForm() {
         (e.message.includes('503') || e.message.includes('overloaded'))
       ) {
         setError(
-          'The AI service is currently overloaded. Please wait a moment and try again.'
+          'The AI service is currently busy. Please wait a moment and try again.'
         );
       } else {
         setError(
@@ -175,34 +168,9 @@ export function ItineraryForm() {
     return null;
   }
 
-  const renderAlert = () => {
-    if (isGuest) {
-      return (
-        <Alert variant="destructive" className="text-center">
-          <UserPlus className="mx-auto mb-2 h-6 w-6" />
-          <AlertTitle>Sign Up to Generate Itineraries</AlertTitle>
-          <AlertDescription>
-            Please create a free account to start planning your trips with
-            Wanderwise AI.
-          </AlertDescription>
-          <Button asChild size="sm" className="mt-4">
-            <Link
-              href="/signup"
-              onClick={() =>
-                trackEvent('CompleteRegistration', {
-                  content_name: 'Signup Click From Guest Alert',
-                })
-              }
-            >
-              Create an Account
-            </Link>
-          </Button>
-        </Alert>
-      );
-    }
-
-    if (isGenerationDisabled) {
-      return (
+  return (
+    <div>
+      {isGenerationDisabled ? (
         <Alert variant="destructive" className="text-center">
           <TriangleAlert className="mx-auto mb-2 h-6 w-6" />
           <AlertTitle>Free Itinerary Limit Reached</AlertTitle>
@@ -225,18 +193,6 @@ export function ItineraryForm() {
             </Link>
           </Button>
         </Alert>
-      );
-    }
-
-    return null;
-  };
-
-  const alertContent = renderAlert();
-
-  return (
-    <div>
-      {alertContent ? (
-        alertContent
       ) : (
         <Card>
           <CardContent className="p-6">
@@ -252,7 +208,7 @@ export function ItineraryForm() {
                     <FormItem>
                       <FormLabel>Destination</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Tokyo, Japan" {...field} />
+                        <Input placeholder="e.g., Paris, France" {...field} />
                       </FormControl>
                       <FormDescription>
                         Where do you want to go?
@@ -267,9 +223,9 @@ export function ItineraryForm() {
                   name="duration"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Duration (in days)</FormLabel>
+                      <FormLabel>Duration</FormLabel>
                       <FormControl>
-                        <Input type="number" placeholder="e.g., 7" {...field} />
+                        <Input type="number" placeholder="e.g., 4" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -284,12 +240,12 @@ export function ItineraryForm() {
                       <FormLabel>Interests</FormLabel>
                       <FormControl>
                         <Textarea
-                          placeholder="e.g., Food, history, anime, hiking"
+                          placeholder="e.g., Food, culture, museums, hidden gems"
                           {...field}
                         />
                       </FormControl>
                       <FormDescription>
-                        Separate interests with a comma.
+                        Separate interests with commas.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>
@@ -325,21 +281,26 @@ export function ItineraryForm() {
 
                 <Button
                   type="submit"
-                  disabled={isLoading || isGenerationDisabled}
+                  disabled={isLoading}
                   className="w-full"
                 >
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
+                      Generating your trip...
                     </>
                   ) : (
                     <>
                       <Sparkles className="mr-2 h-4 w-4" />
-                      Generate Itinerary
+                      Generate My Free Itinerary
                     </>
                   )}
                 </Button>
+
+                <p className="text-center text-xs text-muted-foreground">
+                  No signup required to preview your itinerary. Create an account
+                  only when you want to save it.
+                </p>
               </form>
             </Form>
           </CardContent>
@@ -353,10 +314,10 @@ export function ItineraryForm() {
         </Alert>
       )}
 
-      {user && !isSubscribed && !alertContent && (
+      {user && !isSubscribed && !isGenerationDisabled && (
         <p className="mt-4 text-center text-sm text-muted-foreground">
           You have used {itinerariesGenerated} of your {FREE_ITINERARY_LIMIT}{' '}
-          free generations.
+          free saved-account generations.
         </p>
       )}
     </div>
