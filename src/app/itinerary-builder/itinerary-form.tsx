@@ -33,7 +33,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { doc, increment, updateDoc } from 'firebase/firestore';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
-import { trackEvent } from '@/lib/meta-pixel';
+import { trackMetaEvent } from '@/lib/gtag';
 
 const formSchema = z.object({
   destination: z.string().min(2, {
@@ -74,6 +74,7 @@ export function ItineraryForm() {
 
   const isSubscribed = userProfile?.subscriptionStatus !== 'free';
   const itinerariesGenerated = userProfile?.itinerariesGenerated || 0;
+
   const isGenerationDisabled =
     !!user && !isSubscribed && itinerariesGenerated >= FREE_ITINERARY_LIMIT;
 
@@ -94,7 +95,7 @@ export function ItineraryForm() {
   }, [destination, form]);
 
   useEffect(() => {
-    trackEvent('ViewContent', {
+    trackMetaEvent('ViewContent', {
       content_name: 'Itinerary Builder Form',
       content_category: 'Travel Planning',
     });
@@ -130,11 +131,13 @@ export function ItineraryForm() {
 
         toast({
           title: 'Itinerary Generated',
-          description: `You have used ${itinerariesGenerated + 1} of your ${FREE_ITINERARY_LIMIT} free generations.`,
+          description: `You have used ${
+            itinerariesGenerated + 1
+          } of your ${FREE_ITINERARY_LIMIT} free generations.`,
         });
       }
 
-      trackEvent('ViewContent', {
+      trackMetaEvent('ViewContent', {
         content_name: 'Itinerary Generated',
         content_category: 'Travel Planning',
         destination: values.destination,
@@ -176,14 +179,15 @@ export function ItineraryForm() {
           <AlertTitle>Free Itinerary Limit Reached</AlertTitle>
           <AlertDescription>
             You have used your {FREE_ITINERARY_LIMIT} free itinerary
-            generations. Please upgrade for unlimited creations and to save
-            your trips.
+            generations. Please upgrade for unlimited creations and to save your
+            trips.
           </AlertDescription>
+
           <Button asChild size="sm" className="mt-4">
             <Link
               href="/pricing"
               onClick={() =>
-                trackEvent('Subscribe', {
+                trackMetaEvent('Subscribe', {
                   content_name: 'Upgrade Click From Itinerary Limit',
                   content_category: 'Pricing',
                 })
@@ -279,11 +283,7 @@ export function ItineraryForm() {
                   )}
                 />
 
-                <Button
-                  type="submit"
-                  disabled={isLoading}
-                  className="w-full"
-                >
+                <Button type="submit" disabled={isLoading} className="w-full">
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -298,8 +298,8 @@ export function ItineraryForm() {
                 </Button>
 
                 <p className="text-center text-xs text-muted-foreground">
-                  No signup required to preview your itinerary. Create an account
-                  only when you want to save it.
+                  No signup required to preview your itinerary. Create an
+                  account only when you want to save it.
                 </p>
               </form>
             </Form>
