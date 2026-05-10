@@ -1,5 +1,38 @@
 'use client';
 
+import { Suspense, useEffect, useMemo, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import Link from 'next/link';
+import {
+  addDoc,
+  collection,
+} from 'firebase/firestore';
+import {
+  Calendar,
+  CheckCircle,
+  Crown,
+  DollarSign,
+  FileText,
+  Info,
+  Lock,
+  MapPin,
+  Moon,
+  PlusCircle,
+  Save,
+  Share2,
+  Sparkles,
+  Sun,
+  Sunrise,
+  Tag,
+} from 'lucide-react';
+
+import { useUser, useFirestore } from '@/firebase/provider';
+import { useToast } from '@/hooks/use-toast';
+import type { GenerateSmartItineraryOutput } from '@/ai/flows/generate-smart-itineraries';
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -7,35 +40,8 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { Skeleton } from '@/components/ui/skeleton';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import {
-  FileText,
-  Calendar,
-  DollarSign,
-  Tag,
-  Info,
-  PlusCircle,
-  Save,
-  Sunrise,
-  Sun,
-  Moon,
-  MapPin,
-  Sparkles,
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { useSearchParams, useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { Suspense, useEffect, useState } from 'react';
-import { useUser, useFirestore } from '@/firebase/provider';
-import {
-  addDoc,
-  collection,
-} from 'firebase/firestore';
-import { useToast } from '@/hooks/use-toast';
-import type { GenerateSmartItineraryOutput } from '@/ai/flows/generate-smart-itineraries';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface StoredItineraryData {
   destination: string;
@@ -43,155 +49,223 @@ interface StoredItineraryData {
   interests: string;
   budget: 'low' | 'medium' | 'high';
   generatedItinerary: string;
+  createdAsGuest?: boolean;
 }
 
-function ParsedItinerary({ itinerary }: { itinerary: string | null }) {
-  if (!itinerary) {
-    return (
-      <Alert variant="destructive">
-        <Info className="h-4 w-4" />
-        <AlertTitle>Itinerary Not Available</AlertTitle>
-        <AlertDescription>
-          The content for this itinerary could not be loaded. It might be empty
-          or formatted incorrectly.
-        </AlertDescription>
-      </Alert>
-    );
-  }
+type ParsedTrip = GenerateSmartItineraryOutput;
 
-  let parsedItinerary: GenerateSmartItineraryOutput;
+function parseItinerary(raw: string | null): ParsedTrip | null {
+  if (!raw) return null;
+
   try {
-    parsedItinerary = JSON.parse(itinerary);
-  } catch (error) {
-    console.error('Failed to parse itinerary JSON:', error);
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function formatBudget(budget: StoredItineraryData['budget']) {
+  if (budget === 'low') return 'Budget-friendly';
+  if (budget === 'high') return 'Premium';
+  return 'Mid-range';
+}
+
+function getInterestList(interests: string) {
+  return interests
+    .split(',')
+    .map((interest) => interest.trim())
+    .filter(Boolean);
+}
+
+function collectPlaces(trip: ParsedTrip | null) {
+  if (!trip?.days) return [];
+
+  const places = new Set<string>();
+
+  trip.days.forEach((day) => {
+    [...day.morning, ...day.afternoon, ...day.evening].forEach((activity) => {
+      if (activity.location) {
+        places.add(activity.location);
+      }
+    });
+  });
+
+  return Array.from(places).slice(0, 10);
+}
+
+function TripSummaryCard({
+  data,
+  trip,
+  onSave,
+}: {
+  data: StoredItineraryData;
+  trip: ParsedTrip | null;
+  onSave: () => void;
+}) {
+  return (
+    <Card className="overflow-hidden border-sky-500/30 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 text-white shadow-2xl">
+      <CardHeader className="space-y-5 p-6 sm:p-8">
+        <div className="flex flex-wrap gap-2">
+          <Badge className="bg-sky-400 text-slate-950 hover:bg-sky-400">
+            AI trip ready
+          </Badge>
+          <Badge variant="secondary">
+            {data.duration} days
+          </Badge>
+          <Badge variant="secondary">
+            {formatBudget(data.budget)}
+          </Badge>
+        </div>
+
+        <div>
+          <CardTitle className="text-3xl font-bold tracking-tight sm:text-5xl">
+            {data.destination}
+          </CardTitle>
+          <CardDescription className="mt-3 text-base text-slate-300 sm:text-lg">
+            {data.duration} days · {getInterestList(data.interests).join(' + ') || 'Personalized'} · {formatBudget(data.budget)}
+          </CardDescription>
+        </div>
+
+        <p className="max-w-3xl text-sm leading-7 text-slate-200 sm:text-base">
+          {trip?.overview ||
+            'Your personalized itinerary is ready. Explore your day-by-day plan, places to visit, hotel ideas, and travel tips before creating an account.'}
+        </p>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button onClick={onSave} size="lg" className="bg-sky-400 text-slate-950 hover:bg-sky-300">
+            <Save className="mr-2 h-4 w-4" />
+            Save This Trip
+          </Button>
+          <Button asChild size="lg" variant="secondary">
+            <Link href="/itinerary-builder">
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Generate Another Trip
+            </Link>
+          </Button>
+        </div>
+
+        <p className="text-xs text-slate-400">
+          Free preview unlocked. Create a free account only when you want to save it.
+        </p>
+      </CardHeader>
+    </Card>
+  );
+}
+
+function DayItineraryAccordion({ trip }: { trip: ParsedTrip | null }) {
+  const [openDay, setOpenDay] = useState(1);
+
+  if (!trip?.days?.length) {
     return (
-      <Alert variant="destructive">
+      <Alert>
         <Info className="h-4 w-4" />
-        <AlertTitle>Parsing Error</AlertTitle>
+        <AlertTitle>Itinerary details unavailable</AlertTitle>
         <AlertDescription>
-          There was an issue displaying the itinerary. The format is invalid.
+          The day-by-day plan could not be displayed. Please generate a new itinerary.
         </AlertDescription>
       </Alert>
     );
   }
-
-  const { overview, days } = parsedItinerary;
 
   return (
-    <div className="space-y-8">
-      <p className="text-lg text-muted-foreground">{overview}</p>
-      <Separator />
-      {days.map(day => (
-        <div key={day.day} className="relative pl-8">
-          <div className="absolute left-0 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground font-bold">
-            {day.day}
-          </div>
-          <h2 className="text-2xl font-bold font-headline">{day.title}</h2>
+    <section className="space-y-4">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">Day-by-day itinerary</h2>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Open each day to see your morning, afternoon, and evening plan.
+        </p>
+      </div>
 
-          <div className="mt-6 space-y-8">
-            {/* Morning */}
-            <div className="space-y-4">
-              <h3 className="flex items-center text-xl font-semibold text-primary">
-                <Sunrise className="mr-3 h-6 w-6" />
-                Morning
-              </h3>
-              {day.morning.map((act, i) => (
-                <Card key={`morning-${i}`} className="bg-muted/30">
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-lg">
-                      <Sparkles className="mr-3 h-5 w-5 text-accent" />
-                      {act.activity}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{act.description}</p>
-                    <div className="mt-4 space-y-2 text-sm">
-                      {act.location && (
-                        <div className="flex items-center text-muted-foreground">
-                          <MapPin className="mr-2 h-4 w-4" />
-                          <span>{act.location}</span>
-                        </div>
-                      )}
-                      {act.cost != null && (
-                        <div className="flex items-center text-muted-foreground">
-                          <DollarSign className="mr-2 h-4 w-4" />
-                           <span>Estimated Cost: ${act.cost}</span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+      {trip.days.map((day) => {
+        const isOpen = openDay === day.day;
+        const allActivities = [...day.morning, ...day.afternoon, ...day.evening];
+        const estimatedCost = allActivities.reduce(
+          (sum, activity) => sum + (Number(activity.cost) || 0),
+          0
+        );
 
-            {/* Afternoon */}
-            <div className="space-y-4">
-              <h3 className="flex items-center text-xl font-semibold text-primary">
-                <Sun className="mr-3 h-6 w-6" />
-                Afternoon
-              </h3>
-              {day.afternoon.map((act, i) => (
-                <Card key={`afternoon-${i}`} className="bg-muted/30">
-                   <CardHeader>
-                    <CardTitle className="flex items-center text-lg">
-                      <Sparkles className="mr-3 h-5 w-5 text-accent" />
-                      {act.activity}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{act.description}</p>
-                    <div className="mt-4 space-y-2 text-sm">
-                      {act.location && (
-                        <div className="flex items-center text-muted-foreground">
-                          <MapPin className="mr-2 h-4 w-4" />
-                          <span>{act.location}</span>
-                        </div>
-                      )}
-                      {act.cost != null && (
-                        <div className="flex items-center text-muted-foreground">
-                          <DollarSign className="mr-2 h-4 w-4" />
-                           <span>Estimated Cost: ${act.cost}</span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+        return (
+          <Card key={day.day} className="overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setOpenDay(isOpen ? 0 : day.day)}
+              className="flex w-full items-center justify-between gap-4 p-5 text-left"
+            >
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-sky-500">
+                  Day {day.day}
+                </p>
+                <h3 className="mt-1 text-lg font-semibold">{day.title}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Estimated spend: {estimatedCost > 0 ? `£${estimatedCost}` : 'Flexible'} · Travel intensity: Moderate
+                </p>
+              </div>
+              <Badge variant={isOpen ? 'default' : 'secondary'}>
+                {isOpen ? 'Open' : 'View'}
+              </Badge>
+            </button>
 
-            {/* Evening */}
-            <div className="space-y-4">
-              <h3 className="flex items-center text-xl font-semibold text-primary">
-                <Moon className="mr-3 h-6 w-6" />
-                Evening
-              </h3>
-              {day.evening.map((act, i) => (
-                <Card key={`evening-${i}`} className="bg-muted/30">
-                  <CardHeader>
-                    <CardTitle className="flex items-center text-lg">
-                      <Sparkles className="mr-3 h-5 w-5 text-accent" />
-                      {act.activity}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-muted-foreground">{act.description}</p>
-                    <div className="mt-4 space-y-2 text-sm">
-                      {act.location && (
-                        <div className="flex items-center text-muted-foreground">
-                          <MapPin className="mr-2 h-4 w-4" />
-                          <span>{act.location}</span>
-                        </div>
-                      )}
-                      {act.cost != null && (
-                        <div className="flex items-center text-muted-foreground">
-                          <DollarSign className="mr-2 h-4 w-4" />
-                           <span>Estimated Cost: ${act.cost}</span>
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+            {isOpen && (
+              <CardContent className="space-y-5 border-t p-5">
+                <ActivityBlock title="Morning" icon={<Sunrise className="h-5 w-5" />} activities={day.morning} />
+                <ActivityBlock title="Afternoon" icon={<Sun className="h-5 w-5" />} activities={day.afternoon} />
+                <ActivityBlock title="Evening" icon={<Moon className="h-5 w-5" />} activities={day.evening} />
+
+                <div className="rounded-xl bg-muted/50 p-4 text-sm text-muted-foreground">
+                  Suggested food area:{' '}
+                  <span className="font-medium text-foreground">
+                    {day.evening?.[0]?.location || day.afternoon?.[0]?.location || 'Local neighborhood cafés'}
+                  </span>
+                </div>
+              </CardContent>
+            )}
+          </Card>
+        );
+      })}
+    </section>
+  );
+}
+
+function ActivityBlock({
+  title,
+  icon,
+  activities,
+}: {
+  title: string;
+  icon: React.ReactNode;
+  activities: ParsedTrip['days'][number]['morning'];
+}) {
+  return (
+    <div className="space-y-3">
+      <h4 className="flex items-center gap-2 font-semibold text-primary">
+        {icon}
+        {title}
+      </h4>
+
+      {activities.map((activity, index) => (
+        <div key={`${title}-${index}`} className="rounded-xl border bg-card p-4">
+          <div className="flex items-start gap-3">
+            <Sparkles className="mt-1 h-4 w-4 text-sky-500" />
+            <div>
+              <p className="font-semibold">{activity.activity}</p>
+              <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                {activity.description}
+              </p>
+
+              <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                {activity.location && (
+                  <Badge variant="secondary">
+                    <MapPin className="mr-1 h-3 w-3" />
+                    {activity.location}
+                  </Badge>
+                )}
+                {activity.cost != null && (
+                  <Badge variant="secondary">
+                    <DollarSign className="mr-1 h-3 w-3" />
+                    Approx £{activity.cost}
+                  </Badge>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -200,21 +274,261 @@ function ParsedItinerary({ itinerary }: { itinerary: string | null }) {
   );
 }
 
+function PlacesPreviewCard({
+  places,
+  onUnlock,
+}: {
+  places: string[];
+  onUnlock: () => void;
+}) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Places in this trip</CardTitle>
+        <CardDescription>
+          {places.length || 0} places detected from your itinerary.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-5">
+        <div className="rounded-2xl border bg-gradient-to-br from-sky-50 to-slate-100 p-6 text-center dark:from-slate-900 dark:to-slate-800">
+          <MapPin className="mx-auto h-8 w-8 text-sky-500" />
+          <p className="mt-3 font-medium">Interactive map available after signup</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Save your trip to keep places, routes, and map planning in one dashboard.
+          </p>
+          <Button onClick={onUnlock} className="mt-4">
+            <Lock className="mr-2 h-4 w-4" />
+            Unlock Map View
+          </Button>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          {(places.length ? places : ['More places available after signup']).map((place) => (
+            <Badge key={place} variant="secondary">
+              {place}
+            </Badge>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function HotelRecommendationsCard({ destination }: { destination: string }) {
+  const hotels = [
+    {
+      label: 'Budget',
+      area: 'Well-connected outer central area',
+      price: 'From £80/night',
+      description:
+        'Best if you want to keep costs lower while staying close to transport.',
+    },
+    {
+      label: 'Mid-range',
+      area: 'Central walkable neighborhood',
+      price: 'From £140/night',
+      description:
+        'Great for first-time visitors who want food, sights, and easy daily routing.',
+    },
+    {
+      label: 'Premium',
+      area: 'Iconic view or luxury district',
+      price: 'From £280/night',
+      description:
+        'Ideal for special trips, romantic stays, and a more polished travel experience.',
+    },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Where to stay</CardTitle>
+        <CardDescription>
+          Hotel ideas based on your {destination} itinerary.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 sm:grid-cols-3">
+        {hotels.map((hotel) => (
+          <div key={hotel.label} className="rounded-2xl border p-4">
+            <Badge>{hotel.label}</Badge>
+            <h3 className="mt-3 font-semibold">{hotel.area}</h3>
+            <p className="mt-2 text-sm text-muted-foreground">{hotel.description}</p>
+            <p className="mt-3 text-sm font-semibold">{hotel.price}</p>
+          </div>
+        ))}
+
+        <p className="text-sm text-muted-foreground sm:col-span-3">
+          Save trip to keep hotel recommendations and compare options later.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FoodHiddenGemsCard({ interests }: { interests: string[] }) {
+  return (
+    <Card className="border-sky-500/20">
+      <CardHeader>
+        <CardTitle>Food & hidden gems</CardTitle>
+        <CardDescription>
+          Extra ideas to make the trip feel more local and personal.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-4 sm:grid-cols-2">
+        <div className="rounded-2xl bg-muted/50 p-4">
+          <h3 className="font-semibold">Local food ideas</h3>
+          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <li>Try a classic breakfast at a neighborhood café.</li>
+            <li>Choose one market or food hall for casual local variety.</li>
+            <li>Plan one slower dinner near your evening activity.</li>
+          </ul>
+        </div>
+
+        <div className="rounded-2xl bg-muted/50 p-4">
+          <h3 className="font-semibold">Hidden gem ideas</h3>
+          <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+            <li>Explore one quieter side street away from the busiest landmarks.</li>
+            <li>Add a local viewpoint or park for a slower travel moment.</li>
+            <li>Use your interests: {interests.slice(0, 3).join(', ') || 'food, culture, local places'}.</li>
+          </ul>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function TravelTipsCard() {
+  const tips = [
+    'Start popular attractions early to avoid the busiest crowds.',
+    'Group activities by neighborhood to reduce wasted travel time.',
+    'Leave one flexible slot each day for weather, rest, or discovery.',
+    'Use public transport for longer moves and walk local areas slowly.',
+    'Book high-demand restaurants or attractions in advance.',
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>AI travel tips</CardTitle>
+        <CardDescription>
+          Smart reminders to make your itinerary easier to use.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-3 sm:grid-cols-2">
+        {tips.map((tip) => (
+          <div key={tip} className="flex gap-3 rounded-xl border p-3 text-sm">
+            <CheckCircle className="mt-0.5 h-4 w-4 text-sky-500" />
+            <span>{tip}</span>
+          </div>
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
+function SaveTripPrompt({ onSave }: { onSave: () => void }) {
+  return (
+    <Card className="border-sky-500/30 bg-sky-50 dark:bg-sky-950/20">
+      <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold">Want to keep this itinerary?</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Create a free account to save, revisit, and organize your trip anytime.
+          </p>
+        </div>
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Button onClick={onSave}>
+            <Save className="mr-2 h-4 w-4" />
+            Save My Trip
+          </Button>
+          <Button variant="outline">Continue exploring</Button>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function PremiumUpgradeCard({ onUpgrade }: { onUpgrade: () => void }) {
+  const features = [
+    'Edit itinerary',
+    'Save unlimited trips',
+    'AI travel chat',
+    'Budget insights',
+    'Dashboard access',
+  ];
+
+  return (
+    <Card className="border-amber-400/40">
+      <CardHeader>
+        <Badge className="w-fit bg-amber-400 text-slate-950 hover:bg-amber-400">
+          Most Popular
+        </Badge>
+        <CardTitle className="mt-2 flex items-center gap-2">
+          <Crown className="h-5 w-5 text-amber-500" />
+          Unlock Full Travel Planning
+        </CardTitle>
+        <CardDescription>
+          Upgrade to edit this itinerary, save unlimited trips, and chat with AI for smarter recommendations.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {features.map((feature) => (
+            <div key={feature} className="flex gap-2 text-sm">
+              <CheckCircle className="h-4 w-4 text-sky-500" />
+              {feature}
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-2xl font-bold">£9.99/month</p>
+          <div className="flex gap-2">
+            <Button onClick={onUpgrade}>Upgrade to Premium</Button>
+            <Button variant="outline">Maybe later</Button>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function StickyActionBar({
+  onSave,
+  onShare,
+  onUpgrade,
+}: {
+  onSave: () => void;
+  onShare: () => void;
+  onUpgrade: () => void;
+}) {
+  return (
+    <div className="fixed inset-x-0 bottom-0 z-40 border-t bg-background/95 p-3 shadow-2xl backdrop-blur md:hidden">
+      <div className="mx-auto grid max-w-md grid-cols-3 gap-2">
+        <Button size="sm" onClick={onSave}>
+          <Save className="mr-1 h-4 w-4" />
+          Save
+        </Button>
+        <Button size="sm" variant="outline" onClick={onShare}>
+          <Share2 className="mr-1 h-4 w-4" />
+          Share
+        </Button>
+        <Button size="sm" variant="outline" onClick={onUpgrade}>
+          <Crown className="mr-1 h-4 w-4" />
+          Upgrade
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 function ItineraryDetailsSkeleton() {
   return (
-    <div className="space-y-8">
-      <div className="space-y-4">
-        <Skeleton className="h-10 w-3/4" />
-        <Skeleton className="h-6 w-1/2" />
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Skeleton className="h-24 w-full" />
-        <Skeleton className="h-24 w-full" />
-      </div>
-      <div className="space-y-4">
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
-        <Skeleton className="h-12 w-full" />
+    <div className="container mx-auto max-w-5xl py-12">
+      <div className="space-y-6">
+        <Skeleton className="h-56 w-full rounded-2xl" />
+        <Skeleton className="h-40 w-full rounded-2xl" />
+        <Skeleton className="h-40 w-full rounded-2xl" />
       </div>
     </div>
   );
@@ -228,58 +542,61 @@ function ItineraryResultContent() {
   const { toast } = useToast();
 
   const [itineraryData, setItineraryData] = useState<StoredItineraryData | null>(null);
-  
+
   const id = searchParams.get('id');
 
   useEffect(() => {
-    if (id) {
-        const storedData = sessionStorage.getItem(id);
-        if (storedData) {
-            setItineraryData(JSON.parse(storedData));
-        }
+    if (!id) return;
+
+    const storedData = sessionStorage.getItem(id);
+    if (storedData) {
+      setItineraryData(JSON.parse(storedData));
     }
   }, [id]);
 
+  const parsedTrip = useMemo(
+    () => parseItinerary(itineraryData?.generatedItinerary || null),
+    [itineraryData]
+  );
+
+  const interestsArray = useMemo(
+    () => getInterestList(itineraryData?.interests || ''),
+    [itineraryData]
+  );
+
+  const places = useMemo(() => collectPlaces(parsedTrip), [parsedTrip]);
+
   const handleSave = async () => {
+    if (!itineraryData) return;
+
     if (!user || !firestore) {
-      toast({
-        title: 'Login Required',
-        description: 'Please log in or create an account to save your itinerary.',
-        variant: 'destructive',
-      });
-      router.push('/login');
+      router.push(`/signup?redirect=${encodeURIComponent(`/itinerary/result?id=${id || ''}`)}`);
       return;
     }
 
-    if (!itineraryData) {
-      toast({
-        title: 'Error',
-        description: 'Could not save itinerary due to missing information.',
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    // Save to Firestore
     const itinerariesRef = collection(
       firestore,
       `users/${user.uid}/itineraries`
     );
+
     const saveData = {
       ...itineraryData,
       userId: user.uid,
       createdAt: new Date().toISOString(),
     };
+
     try {
       const newDoc = await addDoc(itinerariesRef, saveData);
+
       toast({
         title: 'Itinerary Saved!',
         description: 'Your trip has been saved to your dashboard.',
       });
-      // Clean up sessionStorage after saving
+
       if (id) {
         sessionStorage.removeItem(id);
       }
+
       router.push(`/itinerary/${newDoc.id}`);
     } catch (e) {
       console.error('Error saving itinerary:', e);
@@ -292,6 +609,36 @@ function ItineraryResultContent() {
     }
   };
 
+  const handleUpgrade = () => {
+    router.push('/pricing');
+  };
+
+  const handleShare = async () => {
+    const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: `My ${itineraryData?.destination || 'travel'} itinerary`,
+          text: 'Check out this AI-generated trip plan from Wanderwise AI.',
+          url: shareUrl,
+        });
+        return;
+      }
+
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: 'Link copied',
+        description: 'The itinerary link was copied to your clipboard.',
+      });
+    } catch {
+      toast({
+        title: 'Share unavailable',
+        description: 'Please copy the page link manually.',
+      });
+    }
+  };
+
   if (!itineraryData) {
     return (
       <div className="container mx-auto max-w-3xl py-12">
@@ -299,84 +646,87 @@ function ItineraryResultContent() {
           <FileText className="h-4 w-4" />
           <AlertTitle>No Itinerary Found</AlertTitle>
           <AlertDescription>
-            It looks like no itinerary data was provided or the session has expired. Please go back and generate a new one.
+            It looks like no itinerary data was provided or the session has expired.
+            Please go back and generate a new one.
           </AlertDescription>
         </Alert>
+
+        <Button asChild className="mt-6">
+          <Link href="/itinerary-builder">Generate a new itinerary</Link>
+        </Button>
       </div>
     );
   }
 
-  const interestsArray = itineraryData.interests
-    ? itineraryData.interests.split(',').map((interest: string) => interest.trim())
-    : [];
-
   return (
-    <div className="container mx-auto max-w-3xl py-12">
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <CardTitle className="font-headline text-4xl font-bold tracking-tight">
-                Your Itinerary: {itineraryData.destination}
-              </CardTitle>
-              <CardDescription className="mt-2 text-lg text-muted-foreground">
-                A personalized plan for your adventure.
-              </CardDescription>
-            </div>
-            <div className="mt-4 flex gap-2 sm:mt-0">
-              <Button onClick={handleSave}>
-                <Save className="mr-2 h-4 w-4" />
-                Save Itinerary
-              </Button>
-              <Button asChild variant="outline">
-                <Link href="/itinerary-builder">
-                  <PlusCircle className="mr-2 h-4 w-4" />
-                  New Itinerary
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Card className="bg-muted/50">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Duration</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{itineraryData.duration} Days</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-muted/50">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Budget</CardTitle>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold capitalize">{itineraryData.budget}</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-muted/50 sm:col-span-3">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Interests</CardTitle>
-                <Tag className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent className="flex flex-wrap gap-2">
-                {interestsArray.map((interest: string) => (
-                  <Badge key={interest} variant="secondary">
-                    {interest}
-                  </Badge>
-                ))}
-              </CardContent>
-            </Card>
+    <>
+      <main className="container mx-auto max-w-5xl space-y-8 px-4 pb-28 pt-8 md:pb-12 md:pt-12">
+        <TripSummaryCard data={itineraryData} trip={parsedTrip} onSave={handleSave} />
+
+        <div className="grid gap-8 lg:grid-cols-[1.35fr_0.85fr]">
+          <div className="space-y-8">
+            <DayItineraryAccordion trip={parsedTrip} />
+            <SaveTripPrompt onSave={handleSave} />
+            <FoodHiddenGemsCard interests={interestsArray} />
+            <TravelTipsCard />
+            <PremiumUpgradeCard onUpgrade={handleUpgrade} />
           </div>
 
-          <Separator />
+          <aside className="space-y-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Trip details</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <DetailRow icon={<Calendar className="h-4 w-4" />} label="Duration" value={`${itineraryData.duration} days`} />
+                <DetailRow icon={<DollarSign className="h-4 w-4" />} label="Budget" value={formatBudget(itineraryData.budget)} />
+                <div>
+                  <div className="mb-2 flex items-center gap-2 text-sm font-medium">
+                    <Tag className="h-4 w-4" />
+                    Interests
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {interestsArray.map((interest) => (
+                      <Badge key={interest} variant="secondary">
+                        {interest}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
 
-          <ParsedItinerary itinerary={itineraryData.generatedItinerary} />
-        </CardContent>
-      </Card>
+            <PlacesPreviewCard places={places} onUnlock={handleSave} />
+            <HotelRecommendationsCard destination={itineraryData.destination} />
+          </aside>
+        </div>
+      </main>
+
+      <StickyActionBar
+        onSave={handleSave}
+        onShare={handleShare}
+        onUpgrade={handleUpgrade}
+      />
+    </>
+  );
+}
+
+function DetailRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-xl border p-3 text-sm">
+      <span className="flex items-center gap-2 text-muted-foreground">
+        {icon}
+        {label}
+      </span>
+      <span className="font-semibold">{value}</span>
     </div>
   );
 }
