@@ -6,17 +6,11 @@ import { useUser } from '@/firebase/provider';
 
 export default function HomePage() {
   const router = useRouter();
-  const { user, isUserLoading } = useUser();
+ const { isUserLoading } = useUser();
 
-  const handleStartPlanning = () => {
-    if (isUserLoading) return;
-
-    if (!user) {
-      router.push('/signup?redirect=/itinerary-builder');
-    } else {
-      router.push('/itinerary-builder');
-    }
-  };
+const handleStartPlanning = () => {
+  router.push('/itinerary-builder');
+};
 
   return (
     <main className="min-h-screen bg-slate-950 text-slate-50">
