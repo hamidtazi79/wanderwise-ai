@@ -83,6 +83,11 @@ function collectPlaces(trip: GenerateSmartItineraryOutput | null) {
   return Array.from(places).slice(0, 10);
 }
 
+function getDestinationImage(destination?: string) {
+  const query = encodeURIComponent(`${destination || 'travel'} destination city`);
+  return `https://source.unsplash.com/1600x900/?${query}`;
+}
+
 function TripHero({
   data,
   trip,
@@ -97,67 +102,79 @@ function TripHero({
   onShare: () => void;
 }) {
   const interests = getInterestList(data.interests);
+  const imageUrl = getDestinationImage(data.destination);
 
   return (
-    <Card className="overflow-hidden border-sky-500/30 bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 text-white shadow-2xl">
-      <CardHeader className="space-y-5 p-6 sm:p-8">
-        <div className="flex flex-wrap gap-2">
-          <Badge className="bg-sky-400 text-slate-950 hover:bg-sky-400">
-            Saved trip
-          </Badge>
-          <Badge variant="secondary">{data.duration} days</Badge>
-          <Badge variant="secondary">{formatBudget(data.budget)}</Badge>
-          {isSubscribed && (
-            <Badge className="bg-amber-400 text-slate-950 hover:bg-amber-400">
-              Premium
+    <Card className="overflow-hidden border-sky-500/30 shadow-2xl">
+      <div
+        className="relative min-h-[420px] bg-cover bg-center"
+        style={{
+          backgroundImage: `linear-gradient(to bottom, rgba(2,6,23,0.25), rgba(2,6,23,0.92)), url(${imageUrl})`,
+        }}
+      >
+        <CardHeader className="relative z-10 flex min-h-[420px] justify-end space-y-5 p-6 text-white sm:p-8">
+          <div className="flex flex-wrap gap-2">
+            <Badge className="bg-sky-400 text-slate-950 hover:bg-sky-400">
+              Saved trip
             </Badge>
-          )}
-        </div>
+            <Badge variant="secondary">{data.duration} days</Badge>
+            <Badge variant="secondary">{formatBudget(data.budget)}</Badge>
+            {isSubscribed && (
+              <Badge className="bg-amber-400 text-slate-950 hover:bg-amber-400">
+                Premium
+              </Badge>
+            )}
+          </div>
 
-        <div>
-          <CardTitle className="text-3xl font-bold tracking-tight sm:text-5xl">
-            {data.destination}
-          </CardTitle>
-          <CardDescription className="mt-3 text-base text-slate-300 sm:text-lg">
-            {data.duration} days ·{' '}
-            {interests.length ? interests.join(' + ') : 'Personalized'} ·{' '}
-            {formatBudget(data.budget)}
-          </CardDescription>
-        </div>
+          <div>
+            <CardTitle className="text-4xl font-bold tracking-tight sm:text-6xl">
+              {data.destination}
+            </CardTitle>
+            <CardDescription className="mt-3 text-base text-slate-200 sm:text-lg">
+              {data.duration} days ·{' '}
+              {interests.length ? interests.join(' + ') : 'Personalized'} ·{' '}
+              {formatBudget(data.budget)}
+            </CardDescription>
+          </div>
 
-        <p className="max-w-3xl text-sm leading-7 text-slate-200 sm:text-base">
-          {trip?.overview ||
-            'Your saved itinerary is ready. Review your day-by-day plan, places, hotel ideas, hidden gems, and travel tips.'}
-        </p>
+          <p className="max-w-3xl text-sm leading-7 text-slate-100 sm:text-base">
+            {trip?.overview ||
+              'Your saved itinerary is ready. Review your day-by-day plan, places, hotel ideas, hidden gems, and travel tips.'}
+          </p>
 
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <Button asChild size="lg" className="bg-sky-400 text-slate-950 hover:bg-sky-300">
-            <Link href="/itinerary-builder">
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Generate Another Trip
-            </Link>
-          </Button>
-
-          <Button size="lg" variant="secondary" onClick={onShare}>
-            <Share2 className="mr-2 h-4 w-4" />
-            Share
-          </Button>
-
-          {isSubscribed ? (
-            <Button size="lg" variant="secondary" onClick={onExport}>
-              <Download className="mr-2 h-4 w-4" />
-              Export
-            </Button>
-          ) : (
-            <Button asChild size="lg" variant="secondary">
-              <Link href="/pricing">
-                <Lock className="mr-2 h-4 w-4" />
-                Unlock Export
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button
+              asChild
+              size="lg"
+              className="bg-sky-400 text-slate-950 hover:bg-sky-300"
+            >
+              <Link href="/itinerary-builder">
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Generate Another Trip
               </Link>
             </Button>
-          )}
-        </div>
-      </CardHeader>
+
+            <Button size="lg" variant="secondary" onClick={onShare}>
+              <Share2 className="mr-2 h-4 w-4" />
+              Share
+            </Button>
+
+            {isSubscribed ? (
+              <Button size="lg" variant="secondary" onClick={onExport}>
+                <Download className="mr-2 h-4 w-4" />
+                Export
+              </Button>
+            ) : (
+              <Button asChild size="lg" variant="secondary">
+                <Link href="/pricing">
+                  <Lock className="mr-2 h-4 w-4" />
+                  Unlock Export
+                </Link>
+              </Button>
+            )}
+          </div>
+        </CardHeader>
+      </div>
     </Card>
   );
 }
