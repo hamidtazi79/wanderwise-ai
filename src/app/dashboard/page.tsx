@@ -62,8 +62,29 @@ import { useState } from 'react';
 import { cancelStripeSubscriptionAtPeriodEnd } from './actions';
 
 function getDestinationImage(destination?: string) {
-  const query = encodeURIComponent(`${destination || 'travel'} destination`);
-  return `https://source.unsplash.com/900x600/?${query}`;
+  const city = (destination || '').toLowerCase();
+
+  if (city.includes('oslo')) {
+    return 'https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?q=80&w=1600&auto=format&fit=crop';
+  }
+
+  if (city.includes('paris')) {
+    return 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=1600&auto=format&fit=crop';
+  }
+
+  if (city.includes('tokyo')) {
+    return 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=1600&auto=format&fit=crop';
+  }
+
+  if (city.includes('fes') || city.includes('fez')) {
+    return 'https://images.unsplash.com/photo-1539020140153-e8c237112e53?q=80&w=1600&auto=format&fit=crop';
+  }
+
+  if (city.includes('nador') || city.includes('morocco')) {
+    return 'https://images.unsplash.com/photo-1548018560-c7196548e84d?q=80&w=1600&auto=format&fit=crop';
+  }
+
+  return 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop';
 }
 
 function formatTripDate(createdAt?: string) {
