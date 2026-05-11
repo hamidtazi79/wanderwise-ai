@@ -4,6 +4,7 @@ import { Suspense, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { addDoc, collection } from 'firebase/firestore';
+import type { User } from 'firebase/auth';
 import {
   Calendar,
   CheckCircle,
@@ -26,6 +27,7 @@ import {
 import { useUser, useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSmartItineraryOutput } from '@/ai/flows/generate-smart-itineraries';
+import { SignupSaveDialog } from '@/components/signup-save-dialog';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -155,7 +157,8 @@ function TripSummaryCard({
           </div>
 
           <p className="text-xs text-slate-300">
-            Free preview unlocked. Create a free account only when you want to save it.
+            Free preview unlocked. Create a free account only when you want to
+            save it.
           </p>
         </CardHeader>
       </div>
@@ -172,7 +175,8 @@ function DayItineraryAccordion({ trip }: { trip: ParsedTrip | null }) {
         <Info className="h-4 w-4" />
         <AlertTitle>Itinerary details unavailable</AlertTitle>
         <AlertDescription>
-          The day-by-day plan could not be displayed. Please generate a new itinerary.
+          The day-by-day plan could not be displayed. Please generate a new
+          itinerary.
         </AlertDescription>
       </Alert>
     );
@@ -181,7 +185,9 @@ function DayItineraryAccordion({ trip }: { trip: ParsedTrip | null }) {
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">Day-by-day itinerary</h2>
+        <h2 className="text-2xl font-bold tracking-tight">
+          Day-by-day itinerary
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
           Open each day to see your morning, afternoon, and evening plan.
         </p>
@@ -189,7 +195,11 @@ function DayItineraryAccordion({ trip }: { trip: ParsedTrip | null }) {
 
       {trip.days.map((day) => {
         const isOpen = openDay === day.day;
-        const allActivities = [...day.morning, ...day.afternoon, ...day.evening];
+        const allActivities = [
+          ...day.morning,
+          ...day.afternoon,
+          ...day.evening,
+        ];
         const estimatedCost = allActivities.reduce(
           (sum, activity) => sum + (Number(activity.cost) || 0),
           0
@@ -209,8 +219,8 @@ function DayItineraryAccordion({ trip }: { trip: ParsedTrip | null }) {
                 <h3 className="mt-1 text-lg font-semibold">{day.title}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Estimated spend:{' '}
-                  {estimatedCost > 0 ? `£${estimatedCost}` : 'Flexible'} · Travel intensity:
-                  Moderate
+                  {estimatedCost > 0 ? `£${estimatedCost}` : 'Flexible'} ·
+                  Travel intensity: Moderate
                 </p>
               </div>
 
@@ -321,9 +331,12 @@ function PlacesPreviewCard({
       <CardContent className="space-y-5">
         <div className="rounded-2xl border bg-gradient-to-br from-sky-50 to-slate-100 p-6 text-center dark:from-slate-900 dark:to-slate-800">
           <MapPin className="mx-auto h-8 w-8 text-sky-500" />
-          <p className="mt-3 font-medium">Interactive map available after signup</p>
+          <p className="mt-3 font-medium">
+            Interactive map available after signup
+          </p>
           <p className="mt-1 text-sm text-muted-foreground">
-            Save your trip to keep places, routes, and map planning in one dashboard.
+            Save your trip to keep places, routes, and map planning in one
+            dashboard.
           </p>
 
           <Button onClick={onUnlock} className="mt-4">
@@ -333,11 +346,13 @@ function PlacesPreviewCard({
         </div>
 
         <div className="flex flex-wrap gap-2">
-          {(places.length ? places : ['More places available after signup']).map((place) => (
-            <Badge key={place} variant="secondary">
-              {place}
-            </Badge>
-          ))}
+          {(places.length ? places : ['More places available after signup']).map(
+            (place) => (
+              <Badge key={place} variant="secondary">
+                {place}
+              </Badge>
+            )
+          )}
         </div>
       </CardContent>
     </Card>
@@ -383,7 +398,9 @@ function HotelRecommendationsCard({ destination }: { destination: string }) {
           <div key={hotel.label} className="rounded-2xl border p-4">
             <Badge>{hotel.label}</Badge>
             <h3 className="mt-3 font-semibold">{hotel.area}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">{hotel.description}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {hotel.description}
+            </p>
             <p className="mt-3 text-sm font-semibold">{hotel.price}</p>
           </div>
         ))}
@@ -419,11 +436,15 @@ function FoodHiddenGemsCard({ interests }: { interests: string[] }) {
         <div className="rounded-2xl bg-muted/50 p-4">
           <h3 className="font-semibold">Hidden gem ideas</h3>
           <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-            <li>Explore one quieter side street away from the busiest landmarks.</li>
+            <li>
+              Explore one quieter side street away from the busiest landmarks.
+            </li>
             <li>Add a local viewpoint or park for a slower travel moment.</li>
             <li>
               Use your interests:{' '}
-              {interests.slice(0, 3).join(', ') || 'food, culture, local places'}.
+              {interests.slice(0, 3).join(', ') ||
+                'food, culture, local places'}
+              .
             </li>
           </ul>
         </div>
@@ -445,7 +466,9 @@ function TravelTipsCard() {
     <Card>
       <CardHeader>
         <CardTitle>AI travel tips</CardTitle>
-        <CardDescription>Smart reminders to make your itinerary easier to use.</CardDescription>
+        <CardDescription>
+          Smart reminders to make your itinerary easier to use.
+        </CardDescription>
       </CardHeader>
 
       <CardContent className="grid gap-3 sm:grid-cols-2">
@@ -467,7 +490,8 @@ function SaveTripPrompt({ onSave }: { onSave: () => void }) {
         <div>
           <h2 className="text-xl font-semibold">Want to keep this itinerary?</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Create a free account to save, revisit, and organize your trip anytime.
+            Create a free account to save, revisit, and organize your trip
+            anytime.
           </p>
         </div>
 
@@ -503,8 +527,8 @@ function PremiumUpgradeCard({ onUpgrade }: { onUpgrade: () => void }) {
           Unlock Full Travel Planning
         </CardTitle>
         <CardDescription>
-          Upgrade to edit this itinerary, save unlimited trips, and chat with AI for
-          smarter recommendations.
+          Upgrade to edit this itinerary, save unlimited trips, and chat with AI
+          for smarter recommendations.
         </CardDescription>
       </CardHeader>
 
@@ -600,7 +624,9 @@ function ItineraryResultContent() {
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [itineraryData, setItineraryData] = useState<StoredItineraryData | null>(null);
+  const [itineraryData, setItineraryData] =
+    useState<StoredItineraryData | null>(null);
+  const [isSignupOpen, setIsSignupOpen] = useState(false);
 
   const id = searchParams.get('id');
 
@@ -625,45 +651,54 @@ function ItineraryResultContent() {
 
   const places = useMemo(() => collectPlaces(parsedTrip), [parsedTrip]);
 
-  const handleSave = async () => {
-    if (!itineraryData) return;
+  const saveTripToFirestore = async (uid: string) => {
+    if (!itineraryData || !firestore) return;
 
-    if (!user || !firestore) {
-      router.push(
-        `/signup?redirect=${encodeURIComponent(`/itinerary/result?id=${id || ''}`)}`
-      );
-      return;
-    }
-
-    const itinerariesRef = collection(firestore, `users/${user.uid}/itineraries`);
+    const itinerariesRef = collection(firestore, `users/${uid}/itineraries`);
 
     const saveData = {
       ...itineraryData,
-      userId: user.uid,
+      userId: uid,
       createdAt: new Date().toISOString(),
     };
 
+    const newDoc = await addDoc(itinerariesRef, saveData);
+
+    if (id) {
+      sessionStorage.removeItem(id);
+    }
+
+    router.push(`/itinerary/${newDoc.id}`);
+  };
+
+  const handleSave = async () => {
+    if (!itineraryData) return;
+
+    if (!user) {
+      setIsSignupOpen(true);
+      return;
+    }
+
     try {
-      const newDoc = await addDoc(itinerariesRef, saveData);
+      await saveTripToFirestore(user.uid);
 
       toast({
         title: 'Itinerary Saved!',
         description: 'Your trip has been saved to your dashboard.',
       });
-
-      if (id) {
-        sessionStorage.removeItem(id);
-      }
-
-      router.push(`/itinerary/${newDoc.id}`);
     } catch (e) {
       console.error('Error saving itinerary:', e);
       toast({
         title: 'Error Saving Itinerary',
-        description: 'There was a problem saving your itinerary. Please try again.',
+        description:
+          'There was a problem saving your itinerary. Please try again.',
         variant: 'destructive',
       });
     }
+  };
+
+  const handleSignupSuccess = async (newUser: User) => {
+    await saveTripToFirestore(newUser.uid);
   };
 
   const handleUpgrade = () => {
@@ -703,8 +738,8 @@ function ItineraryResultContent() {
           <FileText className="h-4 w-4" />
           <AlertTitle>No Itinerary Found</AlertTitle>
           <AlertDescription>
-            It looks like no itinerary data was provided or the session has expired.
-            Please go back and generate a new one.
+            It looks like no itinerary data was provided or the session has
+            expired. Please go back and generate a new one.
           </AlertDescription>
         </Alert>
 
@@ -718,7 +753,11 @@ function ItineraryResultContent() {
   return (
     <>
       <main className="container mx-auto max-w-5xl space-y-8 px-4 pb-28 pt-8 md:pb-12 md:pt-12">
-        <TripSummaryCard data={itineraryData} trip={parsedTrip} onSave={handleSave} />
+        <TripSummaryCard
+          data={itineraryData}
+          trip={parsedTrip}
+          onSave={handleSave}
+        />
 
         <div className="grid gap-8 lg:grid-cols-[1.35fr_0.85fr]">
           <div className="space-y-8">
@@ -774,6 +813,12 @@ function ItineraryResultContent() {
         onSave={handleSave}
         onShare={handleShare}
         onUpgrade={handleUpgrade}
+      />
+
+      <SignupSaveDialog
+        open={isSignupOpen}
+        onOpenChange={setIsSignupOpen}
+        onSignupSuccess={handleSignupSuccess}
       />
     </>
   );
