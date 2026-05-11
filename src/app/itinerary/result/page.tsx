@@ -509,43 +509,64 @@ function SaveTripPrompt({ onSave }: { onSave: () => void }) {
 
 function PremiumUpgradeCard({ onUpgrade }: { onUpgrade: () => void }) {
   const features = [
-    'Edit itinerary',
+    'Edit and refine this itinerary',
     'Save unlimited trips',
-    'AI travel chat',
-    'Budget insights',
-    'Dashboard access',
+    'Unlimited AI travel chat',
+    'Budget insights and export tools',
+    'Dashboard access for all trips',
   ];
 
   return (
-    <Card className="border-amber-400/40">
-      <CardHeader>
+    <Card className="overflow-hidden border-2 border-sky-500 shadow-2xl">
+      <CardHeader className="bg-gradient-to-br from-slate-950 via-slate-900 to-sky-950 text-white">
         <Badge className="w-fit bg-amber-400 text-slate-950 hover:bg-amber-400">
           Most Popular
         </Badge>
-        <CardTitle className="mt-2 flex items-center gap-2">
-          <Crown className="h-5 w-5 text-amber-500" />
+
+        <CardTitle className="mt-3 flex items-center gap-2 text-2xl">
+          <Crown className="h-6 w-6 text-amber-400" />
           Unlock Full Travel Planning
         </CardTitle>
-        <CardDescription>
-          Upgrade to edit this itinerary, save unlimited trips, and chat with AI
-          for smarter recommendations.
+
+        <CardDescription className="text-slate-300">
+          Keep this trip, edit it later, plan unlimited itineraries, and use AI
+          chat to improve your route, hotels, budget, and travel ideas.
         </CardDescription>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="space-y-6 p-6">
         <div className="grid gap-3 sm:grid-cols-2">
           {features.map((feature) => (
             <div key={feature} className="flex gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 text-sky-500" />
-              {feature}
+              <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-sky-500" />
+              <span>{feature}</span>
             </div>
           ))}
         </div>
 
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-2xl font-bold">£9.99/month</p>
-          <div className="flex gap-2">
-            <Button onClick={onUpgrade}>Upgrade to Premium</Button>
+        <div className="rounded-2xl bg-sky-500/10 p-4">
+          <p className="text-sm font-medium">Premium helps when you want to:</p>
+          <p className="mt-1 text-sm text-muted-foreground">
+            save trips, compare options, ask follow-up questions, export your
+            plan, and organize everything in one dashboard.
+          </p>
+        </div>
+
+        <div className="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-3xl font-bold">£9.99/month</p>
+            <p className="text-xs text-muted-foreground">
+              Start free. Upgrade only when you need more.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <Button
+              onClick={onUpgrade}
+              className="bg-sky-500 text-slate-950 hover:bg-sky-400"
+            >
+              Upgrade to Premium
+            </Button>
             <Button variant="outline">Maybe later</Button>
           </div>
         </div>
