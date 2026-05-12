@@ -26,7 +26,7 @@ import {
 import { useFirestore, useUser, useMemoFirebase } from '@/firebase/provider';
 import { useDoc } from '@/firebase/firestore/use-doc';
 import type { GenerateSmartItineraryOutput } from '@/ai/flows/generate-smart-itineraries';
-
+import { getDestinationImage } from '@/lib/getDestinationImage';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -83,89 +83,6 @@ function collectPlaces(trip: GenerateSmartItineraryOutput | null) {
   return Array.from(places).slice(0, 10);
 }
 
-function getDestinationImage(destination?: string) {
-  const city = (destination || '').toLowerCase();
-
-  const images: { keywords: string[]; url: string }[] = [
-    {
-      keywords: ['tangier', 'tanger'],
-      url: 'https://images.unsplash.com/photo-1597212720410-f7f5e8e6b4b9?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['marrakech', 'marrakesh'],
-      url: 'https://images.unsplash.com/photo-1597211684565-dca64d72bdfe?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['fes', 'fez'],
-      url: 'https://images.unsplash.com/photo-1571607388263-1044f9ea01dd?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['chefchaouen', 'chaouen'],
-      url: 'https://images.unsplash.com/photo-1576590785671-3f2d48c3fbe7?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['casablanca'],
-      url: 'https://images.unsplash.com/photo-1571771019784-3ff35f4f4277?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['rabat'],
-      url: 'https://images.unsplash.com/photo-1548018560-c7196548e84d?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['nador'],
-      url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['morocco', 'maroc'],
-      url: 'https://images.unsplash.com/photo-1518548419970-58e3b4079ab2?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['oslo'],
-      url: 'https://images.unsplash.com/photo-1513622470522-26c3c8a854bc?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['paris'],
-      url: 'https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['tokyo'],
-      url: 'https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['london'],
-      url: 'https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['dubai'],
-      url: 'https://images.unsplash.com/photo-1512453979798-5ea266f8880c?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['istanbul'],
-      url: 'https://images.unsplash.com/photo-1524231757912-21f4fe3a7200?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['barcelona'],
-      url: 'https://images.unsplash.com/photo-1580243301384-75e06f95c0cf?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['rome'],
-      url: 'https://images.unsplash.com/photo-1552832230-c0197dd311b5?q=80&w=1600&auto=format&fit=crop',
-    },
-    {
-      keywords: ['new york', 'nyc'],
-      url: 'https://images.unsplash.com/photo-1485871981521-5b1fd3805eee?q=80&w=1600&auto=format&fit=crop',
-    },
-  ];
-
-  const match = images.find((item) =>
-    item.keywords.some((keyword) => city.includes(keyword))
-  );
-
-  return (
-    match?.url ||
-    'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1600&auto=format&fit=crop'
-  );
-}
 
 function TripHero({
   data,
