@@ -28,7 +28,7 @@ import { useUser, useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSmartItineraryOutput } from '@/ai/flows/generate-smart-itineraries';
 import { SignupSaveDialog } from '@/components/signup-save-dialog';
-
+import { getDestinationImage } from '@/lib/getDestinationImage';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -52,10 +52,6 @@ interface StoredItineraryData {
 
 type ParsedTrip = GenerateSmartItineraryOutput;
 
-function getDestinationImage(destination?: string) {
-  const query = encodeURIComponent(`${destination || 'travel'} destination city`);
-  return `https://source.unsplash.com/1600x900/?${query}`;
-}
 
 function parseItinerary(raw: string | null): ParsedTrip | null {
   if (!raw) return null;
