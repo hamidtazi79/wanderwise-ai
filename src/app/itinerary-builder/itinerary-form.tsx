@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { generateSmartItinerary } from '@/ai/flows/generate-smart-itineraries';
+
 import {
   Form,
   FormControl,
@@ -14,9 +15,11 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+
 import {
   Select,
   SelectContent,
@@ -24,29 +27,50 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+
 import { Loader2, Sparkles, TriangleAlert } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from '@/components/ui/alert';
+
 import { Textarea } from '@/components/ui/textarea';
-import { useFirestore, useUser, useMemoFirebase } from '@/firebase/provider';
+
+import {
+  useFirestore,
+  useUser,
+  useMemoFirebase,
+} from '@/firebase/provider';
+
 import { useDoc } from '@/firebase/firestore/use-doc';
+
 import { useSearchParams, useRouter } from 'next/navigation';
+
 import { doc, increment, updateDoc } from 'firebase/firestore';
+
 import Link from 'next/link';
+
 import { useToast } from '@/hooks/use-toast';
+
 import { trackMetaEvent } from '@/lib/gtag';
 
 const formSchema = z.object({
   destination: z.string().min(2, {
     message: 'Destination must be at least 2 characters.',
   }),
+
   duration: z.coerce
     .number()
     .int()
     .min(1, 'Duration must be at least 1 day.')
     .max(30, 'Duration cannot exceed 30 days.'),
+
   interests: z.string().min(3, {
     message: 'Please list at least one interest.',
   }),
+
   budget: z.enum(['low', 'medium', 'high']),
 });
 
@@ -56,30 +80,42 @@ const FREE_ITINERARY_LIMIT = 2;
 
 export function ItineraryForm() {
   const { user, isUserLoading } = useUser();
+
   const firestore = useFirestore();
+
   const searchParams = useSearchParams();
+
   const router = useRouter();
+
   const { toast } = useToast();
+
   const destination = searchParams.get('destination');
 
   const [isLoading, setIsLoading] = useState(false);
+
   const [error, setError] = useState<string | null>(null);
 
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
+
     return doc(firestore, `users/${user.uid}`);
   }, [user, firestore]);
 
   const { data: userProfile } = useDoc(userProfileRef);
 
   const isSubscribed = userProfile?.subscriptionStatus !== 'free';
-  const itinerariesGenerated = userProfile?.itinerariesGenerated || 0;
+
+  const itinerariesGenerated =
+    userProfile?.itinerariesGenerated || 0;
 
   const isGenerationDisabled =
-    !!user && !isSubscribed && itinerariesGenerated >= FREE_ITINERARY_LIMIT;
+    !!user &&
+    !isSubscribed &&
+    itinerariesGenerated >= FREE_ITINERARY_LIMIT;
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
+
     defaultValues: {
       destination: destination || '',
       duration: 7,
@@ -106,14 +142,17 @@ export function ItineraryForm() {
       setError(
         'You have reached your free itinerary generation limit. Please upgrade to continue.'
       );
+
       return;
     }
 
     setIsLoading(true);
+
     setError(null);
 
     try {
       const result = await generateSmartItinerary(values);
+
       const resultId = `itinerary_${Date.now()}`;
 
       const storedData = {
@@ -122,15 +161,24 @@ export function ItineraryForm() {
         createdAsGuest: !user,
       };
 
-      sessionStorage.setItem(resultId, JSON.stringify(storedData));
+      sessionStorage.setItem(
+        resultId,
+        JSON.stringify(storedData)
+      );
 
-      if (user && userProfile && !isSubscribed && userProfileRef) {
+      if (
+        user &&
+        userProfile &&
+        !isSubscribed &&
+        userProfileRef
+      ) {
         await updateDoc(userProfileRef, {
           itinerariesGenerated: increment(1),
         });
 
         toast({
           title: 'Itinerary Generated',
+
           description: `You have used ${
             itinerariesGenerated + 1
           } of your ${FREE_ITINERARY_LIMIT} free generations.`,
@@ -152,7 +200,8 @@ export function ItineraryForm() {
 
       if (
         e.message &&
-        (e.message.includes('503') || e.message.includes('overloaded'))
+        (e.message.includes('503') ||
+          e.message.includes('overloaded'))
       ) {
         setError(
           'The AI service is currently busy. Please wait a moment and try again.'
@@ -176,11 +225,16 @@ export function ItineraryForm() {
       {isGenerationDisabled ? (
         <Alert variant="destructive" className="text-center">
           <TriangleAlert className="mx-auto mb-2 h-6 w-6" />
-          <AlertTitle>Free Itinerary Limit Reached</AlertTitle>
+
+          <AlertTitle>
+            Free Itinerary Limit Reached
+          </AlertTitle>
+
           <AlertDescription>
-            You have used your {FREE_ITINERARY_LIMIT} free itinerary
-            generations. Please upgrade for unlimited creations and to save your
-            trips.
+            You have used your{' '}
+            {FREE_ITINERARY_LIMIT} free itinerary
+            generations. Please upgrade for unlimited
+            creations and to save your trips.
           </AlertDescription>
 
           <Button asChild size="sm" className="mt-4">
@@ -188,7 +242,9 @@ export function ItineraryForm() {
               href="/pricing"
               onClick={() =>
                 trackMetaEvent('Subscribe', {
-                  content_name: 'Upgrade Click From Itinerary Limit',
+                  content_name:
+                    'Upgrade Click From Itinerary Limit',
+
                   content_category: 'Pricing',
                 })
               }
@@ -210,13 +266,21 @@ export function ItineraryForm() {
                   name="destination"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Destination</FormLabel>
+                      <FormLabel>
+                        Destination
+                      </FormLabel>
+
                       <FormControl>
-                        <Input placeholder="e.g., Paris, France" {...field} />
+                        <Input
+                          placeholder="e.g., Paris, France"
+                          {...field}
+                        />
                       </FormControl>
+
                       <FormDescription>
                         Where do you want to go?
                       </FormDescription>
+
                       <FormMessage />
                     </FormItem>
                   )}
@@ -227,10 +291,18 @@ export function ItineraryForm() {
                   name="duration"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Duration</FormLabel>
+                      <FormLabel>
+                        Duration
+                      </FormLabel>
+
                       <FormControl>
-                        <Input type="number" placeholder="e.g., 4" {...field} />
+                        <Input
+                          type="number"
+                          placeholder="e.g., 4"
+                          {...field}
+                        />
                       </FormControl>
+
                       <FormMessage />
                     </FormItem>
                   )}
@@ -241,16 +313,21 @@ export function ItineraryForm() {
                   name="interests"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Interests</FormLabel>
+                      <FormLabel>
+                        Interests
+                      </FormLabel>
+
                       <FormControl>
                         <Textarea
                           placeholder="e.g., Food, culture, museums, hidden gems"
                           {...field}
                         />
                       </FormControl>
+
                       <FormDescription>
                         Separate interests with commas.
                       </FormDescription>
+
                       <FormMessage />
                     </FormItem>
                   )}
@@ -261,7 +338,10 @@ export function ItineraryForm() {
                   name="budget"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Budget</FormLabel>
+                      <FormLabel>
+                        Budget
+                      </FormLabel>
+
                       <Select
                         name={field.name}
                         onValueChange={field.onChange}
@@ -272,18 +352,32 @@ export function ItineraryForm() {
                             <SelectValue placeholder="Select your budget" />
                           </SelectTrigger>
                         </FormControl>
+
                         <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="low">
+                            Low
+                          </SelectItem>
+
+                          <SelectItem value="medium">
+                            Medium
+                          </SelectItem>
+
+                          <SelectItem value="high">
+                            High
+                          </SelectItem>
                         </SelectContent>
                       </Select>
+
                       <FormMessage />
                     </FormItem>
                   )}
                 />
 
-                <Button type="submit" disabled={isLoading} className="w-full">
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full"
+                >
                   {isLoading ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -298,8 +392,9 @@ export function ItineraryForm() {
                 </Button>
 
                 <p className="text-center text-xs text-muted-foreground">
-                  No signup required to preview your itinerary. Create an
-                  account only when you want to save it.
+                  No signup required to preview your
+                  itinerary. Create an account only when
+                  you want to save it.
                 </p>
               </form>
             </Form>
@@ -308,18 +403,27 @@ export function ItineraryForm() {
       )}
 
       {error && (
-        <Alert variant="destructive" className="mt-6">
+        <Alert
+          variant="destructive"
+          className="mt-6"
+        >
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>{error}</AlertDescription>
+
+          <AlertDescription>
+            {error}
+          </AlertDescription>
         </Alert>
       )}
 
-      {user && !isSubscribed && !isGenerationDisabled && (
-        <p className="mt-4 text-center text-sm text-muted-foreground">
-          You have used {itinerariesGenerated} of your {FREE_ITINERARY_LIMIT}{' '}
-          free saved-account generations.
-        </p>
-      )}
+      {user &&
+        !isSubscribed &&
+        !isGenerationDisabled && (
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            You have used {itinerariesGenerated} of your{' '}
+            {FREE_ITINERARY_LIMIT} free saved-account
+            generations.
+          </p>
+        )}
     </div>
   );
 }
