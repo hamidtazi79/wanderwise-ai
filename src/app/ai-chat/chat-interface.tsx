@@ -2,19 +2,37 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { getInstantAIChatSupport } from '@/ai/flows/get-instant-ai-chat-support';
+
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
+
 import { cn } from '@/lib/utils';
-import { Bot, Loader2, Send, User, TriangleAlert, UserPlus } from 'lucide-react';
-import { useFirestore, useUser, useMemoFirebase } from '@/firebase/provider';
+
+import {
+  Bot,
+  Loader2,
+  Send,
+  User,
+  TriangleAlert,
+  UserPlus,
+  Sparkles,
+} from 'lucide-react';
+
+import {
+  useFirestore,
+  useUser,
+  useMemoFirebase,
+} from '@/firebase/provider';
+
 import { useDoc } from '@/firebase/firestore/use-doc';
+
 import { doc, increment, updateDoc } from 'firebase/firestore';
+
 import Link from 'next/link';
+
 import { marked } from 'marked';
-import { Logo } from '@/components/logo';
-import { useRouter } from 'next/navigation';
 
 type Message = {
   role: 'user' | 'assistant';
@@ -27,81 +45,115 @@ export function ChatInterface() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
   const scrollAreaRef = useRef<HTMLDivElement>(null);
-  
+
   const { user, isUserLoading } = useUser();
   const firestore = useFirestore();
-  const router = useRouter();
 
   const userProfileRef = useMemoFirebase(() => {
     if (!user || !firestore) return null;
+
     return doc(firestore, `users/${user.uid}`);
   }, [user, firestore]);
 
   const { data: userProfile } = useDoc(userProfileRef);
 
   const isSubscribed = userProfile?.subscriptionStatus !== 'free';
+
   const chatLimit = userProfile?.chatMessagesSent || 0;
-  const isChatDisabled = !isSubscribed && chatLimit >= FREE_CHAT_LIMIT;
+
+  const isChatDisabled =
+    !isSubscribed && chatLimit >= FREE_CHAT_LIMIT;
+
   const isGuest = !user;
 
   useEffect(() => {
-    // Add an initial greeting from the assistant
     setMessages([
-        { role: 'assistant', content: "Hello! I'm your Wanderwise AI assistant. How can I help you plan your travels today?" }
+      {
+        role: 'assistant',
+        content:
+          "Hello 👋 I'm your Wanderwise AI travel assistant. Ask me about destinations, itineraries, budgets, food spots, hidden gems, or smarter ways to plan your trip.",
+      },
     ]);
   }, []);
 
   useEffect(() => {
     if (scrollAreaRef.current) {
-        // Use a slight delay to ensure the new message is rendered before scrolling
-        setTimeout(() => {
-            const viewport = scrollAreaRef.current?.querySelector('div[data-radix-scroll-area-viewport]');
-            if (viewport) {
-                viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
-            }
-        }, 100);
+      setTimeout(() => {
+        const viewport =
+          scrollAreaRef.current?.querySelector(
+            'div[data-radix-scroll-area-viewport]'
+          );
+
+        if (viewport) {
+          viewport.scrollTo({
+            top: viewport.scrollHeight,
+            behavior: 'smooth',
+          });
+        }
+      }, 100);
     }
   }, [messages]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (
+    e: React.FormEvent
+  ) => {
     e.preventDefault();
-    if (isGuest) {
-      router.push('/signup');
-      return;
-    }
-    if (!input.trim() || isLoading || isChatDisabled || !userProfileRef) return;
 
-    const userMessage: Message = { role: 'user', content: input };
-    const currentMessages = [...messages, userMessage];
-    setMessages(currentMessages);
+    if (isGuest) return;
+
+    if (
+      !input.trim() ||
+      isLoading ||
+      isChatDisabled ||
+      !userProfileRef
+    )
+      return;
+
+    const userMessage: Message = {
+      role: 'user',
+      content: input,
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+
+    const currentInput = input;
+
     setInput('');
+
     setIsLoading(true);
 
     try {
       if (!isSubscribed) {
-        // Increment usage for free users
         await updateDoc(userProfileRef, {
-            chatMessagesSent: increment(1)
+          chatMessagesSent: increment(1),
         });
       }
 
       const response = await getInstantAIChatSupport({
-        query: input,
-        history: messages, // Pass previous messages for context
+        query: currentInput,
+        history: messages,
       });
-      const assistantMessage: Message = {
-        role: 'assistant',
-        content: response.response,
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content: response.response,
+        },
+      ]);
     } catch (error) {
-      console.error('AI chat error:', error);
-      const errorMessage: Message = {
-        role: 'assistant',
-        content: "Sorry, I'm having trouble connecting right now. Please try again later.",
-      };
-      setMessages((prev) => [...prev, errorMessage]);
+      console.error(error);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: 'assistant',
+          content:
+            'Sorry, something went wrong while generating your travel response.',
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -111,120 +163,177 @@ export function ChatInterface() {
     if (isUserLoading) return null;
 
     if (isGuest) {
-       return (
-        <div className="text-center text-sm text-muted-foreground bg-muted p-4 rounded-lg">
-            <UserPlus className="mx-auto mb-2 h-6 w-6 text-primary" />
-            <h3 className="font-semibold text-foreground">Sign Up to Use AI Chat</h3>
-            <p>Create a free account to get travel advice from our AI assistant.</p>
-            <Button asChild size="sm" className="mt-3">
-                <Link href="/signup">Create an Account</Link>
-            </Button>
+      return (
+        <div className="rounded-2xl border bg-slate-50 p-6 text-center">
+          <UserPlus className="mx-auto h-7 w-7 text-sky-500" />
+
+          <h3 className="mt-3 text-lg font-semibold">
+            Create a free account
+          </h3>
+
+          <p className="mt-2 text-sm text-muted-foreground">
+            Sign up to use the AI travel assistant and start planning smarter trips.
+          </p>
+
+          <Button asChild className="mt-5">
+            <Link href="/signup">
+              Create Account
+            </Link>
+          </Button>
         </div>
-      )
+      );
     }
 
     if (isChatDisabled) {
-        return (
-            <div className="text-center text-sm text-muted-foreground bg-muted p-4 rounded-lg">
-                <TriangleAlert className="mx-auto mb-2 h-6 w-6 text-primary" />
-                <h3 className="font-semibold text-foreground">Free Chat Limit Reached</h3>
-                <p>You&apos;ve used your {FREE_CHAT_LIMIT} free message.</p>
-                <Button asChild size="sm" className="mt-3">
-                    <Link href="/pricing">Upgrade for Unlimited Chat</Link>
-                </Button>
-            </div>
-        )
+      return (
+        <div className="rounded-2xl border bg-slate-50 p-6 text-center">
+          <TriangleAlert className="mx-auto h-7 w-7 text-amber-500" />
+
+          <h3 className="mt-3 text-lg font-semibold">
+            Free message limit reached
+          </h3>
+
+          <p className="mt-2 text-sm text-muted-foreground">
+            Upgrade to Premium for unlimited AI travel chat and itinerary tools.
+          </p>
+
+          <Button asChild className="mt-5">
+            <Link href="/pricing">
+              Upgrade to Premium
+            </Link>
+          </Button>
+        </div>
+      );
     }
 
     return (
-        <>
-            <form onSubmit={handleSubmit} className="flex items-center gap-2 max-w-3xl mx-auto">
-                <Input
-                    value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask about destinations, travel tips, or bookings..."
-                    disabled={isLoading}
-                    autoComplete="off"
-                    className="flex-1"
-                />
-                <Button type="submit" disabled={isLoading || !input.trim()} size="icon">
-                    <Send size={18} />
-                    <span className="sr-only">Send Message</span>
-                </Button>
-            </form>
-             {user && !isSubscribed && (
-                <p className="mt-2 text-xs text-muted-foreground text-center">
-                    Free Plan: {chatLimit}/{FREE_CHAT_LIMIT} message used. <Link href="/pricing" className="underline hover:text-primary">Upgrade</Link> for unlimited access.
-                </p>
-            )}
-        </>
-    )
-  }
+      <>
+        <form
+          onSubmit={handleSubmit}
+          className="flex items-center gap-3"
+        >
+          <Input
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="Ask about destinations, budgets, itineraries, food, or travel ideas..."
+            disabled={isLoading}
+            autoComplete="off"
+            className="h-12 rounded-xl"
+          />
+
+          <Button
+            type="submit"
+            disabled={isLoading || !input.trim()}
+            size="icon"
+            className="h-12 w-12 rounded-xl"
+          >
+            <Send className="h-4 w-4" />
+          </Button>
+        </form>
+
+        {user && !isSubscribed && (
+          <p className="mt-3 text-center text-xs text-muted-foreground">
+            Free Plan: {chatLimit}/{FREE_CHAT_LIMIT} message used ·{' '}
+            <Link
+              href="/pricing"
+              className="font-medium text-sky-600 hover:underline"
+            >
+              Upgrade for unlimited AI chat
+            </Link>
+          </p>
+        )}
+      </>
+    );
+  };
 
   return (
-    <div className="flex flex-col h-full bg-card">
-        <header className="flex items-center justify-between p-4 border-b">
-            <Logo showText={true} />
-        </header>
-      <ScrollArea className="flex-1" ref={scrollAreaRef}>
-        <div className="p-6 space-y-6">
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b bg-white px-5 py-4">
+        <div>
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <Sparkles className="h-5 w-5 text-sky-500" />
+            Wanderwise AI Assistant
+          </h2>
+
+          <p className="text-sm text-muted-foreground">
+            Personalized travel planning powered by AI
+          </p>
+        </div>
+      </div>
+
+      <ScrollArea
+        className="flex-1 bg-slate-50"
+        ref={scrollAreaRef}
+      >
+        <div className="space-y-6 p-5">
           {messages.map((message, index) => (
             <div
               key={index}
               className={cn(
-                'flex items-start gap-4',
-                message.role === 'user' ? 'justify-end' : ''
+                'flex gap-3',
+                message.role === 'user'
+                  ? 'justify-end'
+                  : 'justify-start'
               )}
             >
               {message.role === 'assistant' && (
-                <Avatar className="h-8 w-8 border">
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    <Bot size={18} />
+                <Avatar className="h-9 w-9 border">
+                  <AvatarFallback className="bg-sky-500 text-white">
+                    <Bot className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
               )}
+
               <div
                 className={cn(
-                  'max-w-xl rounded-lg px-4 py-3 shadow-sm',
+                  'max-w-[85%] rounded-2xl px-4 py-3 text-sm shadow-sm',
                   message.role === 'user'
-                    ? 'bg-primary text-primary-foreground'
-                    : 'bg-muted'
+                    ? 'bg-sky-500 text-white'
+                    : 'border bg-white'
                 )}
               >
-                 {message.role === 'assistant' ? (
+                {message.role === 'assistant' ? (
                   <div
-                    className="prose prose-sm dark:prose-invert max-w-none"
-                    dangerouslySetInnerHTML={{ __html: marked(message.content) as string }}
+                    className="prose prose-sm max-w-none dark:prose-invert"
+                    dangerouslySetInnerHTML={{
+                      __html: marked(message.content) as string,
+                    }}
                   />
                 ) : (
-                  <p className="text-sm">{message.content}</p>
+                  <p>{message.content}</p>
                 )}
               </div>
+
               {message.role === 'user' && (
-                <Avatar className="h-8 w-8 border">
+                <Avatar className="h-9 w-9 border">
                   <AvatarFallback>
-                    <User size={18} />
+                    <User className="h-4 w-4" />
                   </AvatarFallback>
                 </Avatar>
               )}
             </div>
           ))}
+
           {isLoading && (
-             <div className="flex items-start gap-4">
-                <Avatar className="h-8 w-8 border">
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    <Bot size={18} />
-                  </AvatarFallback>
-                </Avatar>
-                <div className="flex items-center space-x-2 rounded-lg bg-muted px-4 py-3 shadow-sm">
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">Thinking...</span>
-                </div>
+            <div className="flex gap-3">
+              <Avatar className="h-9 w-9 border">
+                <AvatarFallback className="bg-sky-500 text-white">
+                  <Bot className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+
+              <div className="flex items-center gap-2 rounded-2xl border bg-white px-4 py-3">
+                <Loader2 className="h-4 w-4 animate-spin text-sky-500" />
+                <span className="text-sm text-muted-foreground">
+                  Thinking...
+                </span>
+              </div>
             </div>
           )}
         </div>
       </ScrollArea>
-      <div className="border-t bg-background/50 p-4">
+
+      <div className="border-t bg-white p-4">
         {renderBottomBar()}
       </div>
     </div>
