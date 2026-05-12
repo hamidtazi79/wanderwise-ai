@@ -5,6 +5,34 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase/provider';
 
+const popularDestinations = [
+  {
+    name: 'Paris',
+    href: '/destinations/paris',
+    text: 'Romantic city breaks, museums, cafés, and iconic landmarks.',
+  },
+  {
+    name: 'Tokyo',
+    href: '/destinations/tokyo',
+    text: 'Anime districts, sushi spots, temples, nightlife, and culture.',
+  },
+  {
+    name: 'Marrakech',
+    href: '/destinations/marrakech',
+    text: 'Souks, riads, desert experiences, gardens, and Moroccan food.',
+  },
+  {
+    name: 'Dubai',
+    href: '/destinations/dubai',
+    text: 'Luxury stays, desert tours, shopping, beaches, and skyline views.',
+  },
+  {
+    name: 'London',
+    href: '/destinations/london',
+    text: 'Museums, markets, royal sights, food spots, and city walks.',
+  },
+];
+
 export default function HomePage() {
   const router = useRouter();
   const { isUserLoading } = useUser();
@@ -131,38 +159,50 @@ export default function HomePage() {
               daily schedules, and useful trip structure while helping you refine
               your plans with AI tools.
             </p>
+          </div>
+        </div>
+      </section>
 
-            <p className="text-sm leading-7 text-slate-300 sm:text-base">
-              You can explore the{' '}
-              <Link
-                href="/itinerary-builder"
-                className="font-medium text-sky-300 hover:text-sky-200"
-              >
-                AI itinerary builder
-              </Link>
-              , compare plans on the{' '}
-              <Link
-                href="/pricing"
-                className="font-medium text-sky-300 hover:text-sky-200"
-              >
-                pricing page
-              </Link>
-              , browse ideas on the{' '}
-              <Link
-                href="/blog"
-                className="font-medium text-sky-300 hover:text-sky-200"
-              >
-                travel blog
-              </Link>
-              , or ask follow-up questions in the{' '}
-              <Link
-                href="/ai-chat"
-                className="font-medium text-sky-300 hover:text-sky-200"
-              >
-                AI travel chat
-              </Link>
-              .
+      <section className="border-b border-slate-800 bg-slate-950">
+        <div className="mx-auto max-w-6xl px-4 py-16 sm:py-20">
+          <div className="max-w-3xl">
+            <p className="text-sm font-semibold uppercase tracking-wide text-sky-400">
+              Popular destination guides
             </p>
+            <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl">
+              Explore AI travel guides before building your itinerary
+            </h2>
+            <p className="mt-3 text-sm leading-7 text-slate-300 sm:text-base">
+              Browse popular destination pages for trip ideas, then generate a
+              custom itinerary based on your budget, dates, and interests.
+            </p>
+          </div>
+
+          <div className="mt-8 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {popularDestinations.map((destinationItem) => (
+              <Link
+                key={destinationItem.href}
+                href={destinationItem.href}
+                className="group rounded-3xl border border-slate-800 bg-slate-900/60 p-6 transition hover:-translate-y-1 hover:border-sky-500 hover:shadow-2xl hover:shadow-sky-950/40"
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <h3 className="text-xl font-bold">
+                    {destinationItem.name}
+                  </h3>
+                  <span className="rounded-full bg-sky-500/10 px-3 py-1 text-xs font-semibold text-sky-300">
+                    Guide
+                  </span>
+                </div>
+
+                <p className="mt-3 text-sm leading-6 text-slate-300">
+                  {destinationItem.text}
+                </p>
+
+                <span className="mt-5 inline-flex text-sm font-semibold text-sky-300 group-hover:text-sky-200">
+                  View {destinationItem.name} guide →
+                </span>
+              </Link>
+            ))}
           </div>
         </div>
       </section>
