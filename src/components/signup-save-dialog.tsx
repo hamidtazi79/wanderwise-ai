@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   createUserWithEmailAndPassword,
+  getAdditionalUserInfo,
   GoogleAuthProvider,
-  signInWithEmailAndPassword,
   signInWithPopup,
+  signOut,
   updateProfile,
   type User,
 } from 'firebase/auth';
@@ -41,7 +43,6 @@ interface SignupSaveDialogProps {
   onSignupSuccess: (user: User) => Promise<void>;
 }
 
-type AuthMode = 'signup' | 'login';
 type SignupMethod = 'email' | 'google';
 
 function getCookie(name: string) {
@@ -79,29 +80,28 @@ async function sendMetaCompleteRegistration(
   }
 }
 
-function getFriendlyAuthError(error: unknown) {
-  const code =
+function getFirebaseErrorCode(error: unknown) {
+  if (
     typeof error === 'object' &&
     error !== null &&
     'code' in error &&
     typeof error.code === 'string'
-      ? error.code
-      : '';
+  ) {
+    return error.code;
+  }
+
+  return '';
+}
+
+function getFriendlySignupError(error: unknown) {
+  const code = getFirebaseErrorCode(error);
 
   switch (code) {
-    case 'auth/email-already-in-use':
-      return 'An account already exists with this email. Choose “Log in” instead.';
-
     case 'auth/invalid-email':
       return 'Please enter a valid email address.';
 
     case 'auth/weak-password':
-      return 'Please use a stronger password with at least 6 characters.';
-
-    case 'auth/invalid-credential':
-    case 'auth/wrong-password':
-    case 'auth/user-not-found':
-      return 'The email or password is incorrect. Please try again.';
+      return 'Please use a password containing at least 6 characters.';
 
     case 'auth/too-many-requests':
       return 'Too many attempts were made. Please wait briefly and try again.';
@@ -110,13 +110,13 @@ function getFriendlyAuthError(error: unknown) {
       return 'A network problem occurred. Check your connection and try again.';
 
     case 'auth/popup-blocked':
-      return 'Your browser blocked the Google sign-in window. Please allow popups and try again.';
+      return 'Your browser blocked the Google signup window. Please allow popups and try again.';
 
     case 'auth/account-exists-with-different-credential':
-      return 'An account already exists with this email using another sign-in method.';
+      return 'This email is already registered using another sign-in method.';
 
     default:
-      return 'Something went wrong. Please try again.';
+      return 'Something went wrong while creating your account. Please try again.';
   }
 }
 
@@ -150,11 +150,11 @@ export function SignupSaveDialog({
   onOpenChange,
   onSignupSuccess,
 }: SignupSaveDialogProps) {
+  const router = useRouter();
   const auth = useAuth();
   const firestore = useFirestore();
   const { toast } = useToast();
 
-  const [mode, setMode] = useState<AuthMode>('signup');
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -164,29 +164,28 @@ export function SignupSaveDialog({
 
   const isLoading = isEmailLoading || isGoogleLoading;
 
-  async function createProfileIfNotExists(
+  async function createNewUserProfile(
     user: User,
     requestedDisplayName?: string
   ) {
     const userRef = doc(firestore, `users/${user.uid}`);
-    const snapshot = await getDoc(userRef);
+    const existingProfile = await getDoc(userRef);
 
-    if (snapshot.exists()) {
-      return false;
+    if (existingProfile.exists()) {
+      throw new Error('USER_PROFILE_ALREADY_EXISTS');
     }
 
+    const cleanedDisplayName = requestedDisplayName?.trim();
+
     const finalDisplayName =
-      requestedDisplayName.trim() ||
+      cleanedDisplayName ||
       user.displayName ||
       user.email?.split('@')[0] ||
       'Traveller';
 
-    if (
-      requestedDisplayName.trim() &&
-      user.displayName !== requestedDisplayName.trim()
-    ) {
+    if (cleanedDisplayName && user.displayName !== cleanedDisplayName) {
       await updateProfile(user, {
-        displayName: requestedDisplayName.trim(),
+        displayName: cleanedDisplayName,
       });
     }
 
@@ -200,8 +199,6 @@ export function SignupSaveDialog({
       chatMessagesSent: 0,
       createdAt: new Date().toISOString(),
     });
-
-    return true;
   }
 
   function resetForm() {
@@ -211,32 +208,47 @@ export function SignupSaveDialog({
     setShowPassword(false);
   }
 
-  function changeMode(nextMode: AuthMode) {
-    if (isLoading) return;
-
-    setMode(nextMode);
-    setPassword('');
-    setShowPassword(false);
-  }
-
-  async function finishAuthentication(user: User) {
-    await onSignupSuccess(user);
+  function redirectExistingUserToLogin() {
     onOpenChange(false);
     resetForm();
 
     toast({
-      title: 'Trip saved!',
-      description: 'Your itinerary is now available in your dashboard.',
+      title: 'Account already exists',
+      description:
+        'You have already used the new-account benefit. Please log in to access your existing account.',
+    });
+
+    router.push('/login?redirect=/dashboard');
+  }
+
+  async function completeNewUserSignup(
+    user: User,
+    signupMethod: SignupMethod
+  ) {
+    if (user.email) {
+      trackSignup(signupMethod);
+      await sendMetaCompleteRegistration(user.email, signupMethod);
+    }
+
+    await onSignupSuccess(user);
+
+    onOpenChange(false);
+    resetForm();
+
+    toast({
+      title: 'Account created and trip saved!',
+      description:
+        'Your free itinerary is now available in your Wanderwise dashboard.',
     });
   }
 
-  async function handleEmailSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleEmailSignup(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    const normalizedEmail = email.trim().toLowerCase();
     const normalizedName = displayName.trim();
+    const normalizedEmail = email.trim().toLowerCase();
 
-    if (mode === 'signup' && normalizedName.length < 2) {
+    if (normalizedName.length < 2) {
       toast({
         title: 'Please enter your name',
         description: 'Your name must contain at least 2 characters.',
@@ -266,35 +278,36 @@ export function SignupSaveDialog({
     setIsEmailLoading(true);
 
     try {
-      if (mode === 'signup') {
-        const result = await createUserWithEmailAndPassword(
-          auth,
-          normalizedEmail,
-          password
-        );
-
-        await createProfileIfNotExists(result.user, normalizedName);
-
-        trackSignup('email');
-        await sendMetaCompleteRegistration(normalizedEmail, 'email');
-
-        await finishAuthentication(result.user);
-        return;
-      }
-
-      const result = await signInWithEmailAndPassword(
+      const result = await createUserWithEmailAndPassword(
         auth,
         normalizedEmail,
         password
       );
 
-      await finishAuthentication(result.user);
+      await createNewUserProfile(result.user, normalizedName);
+      await completeNewUserSignup(result.user, 'email');
     } catch (error) {
-      console.error('Email authentication error:', error);
+      const code = getFirebaseErrorCode(error);
+
+      console.error('Email signup error:', error);
+
+      if (code === 'auth/email-already-in-use') {
+        redirectExistingUserToLogin();
+        return;
+      }
+
+      if (
+        error instanceof Error &&
+        error.message === 'USER_PROFILE_ALREADY_EXISTS'
+      ) {
+        await signOut(auth);
+        redirectExistingUserToLogin();
+        return;
+      }
 
       toast({
-        title: mode === 'signup' ? 'Sign up failed' : 'Login failed',
-        description: getFriendlyAuthError(error),
+        title: 'Sign up failed',
+        description: getFriendlySignupError(error),
         variant: 'destructive',
       });
     } finally {
@@ -302,7 +315,7 @@ export function SignupSaveDialog({
     }
   }
 
-  async function handleGoogleAuthentication() {
+  async function handleGoogleSignup() {
     setIsGoogleLoading(true);
 
     try {
@@ -313,35 +326,44 @@ export function SignupSaveDialog({
       });
 
       const result = await signInWithPopup(auth, provider);
-      const isNewProfile = await createProfileIfNotExists(result.user);
+      const additionalUserInfo = getAdditionalUserInfo(result);
 
-      if (isNewProfile) {
-        trackSignup('google');
-
-        if (result.user.email) {
-          await sendMetaCompleteRegistration(result.user.email, 'google');
-        }
+      /*
+       * Firebase signs in both new and existing Google users.
+       * We only allow the guest itinerary benefit when Firebase confirms
+       * this Google account has just been created.
+       */
+      if (!additionalUserInfo?.isNewUser) {
+        await signOut(auth);
+        redirectExistingUserToLogin();
+        return;
       }
 
-      await finishAuthentication(result.user);
+      await createNewUserProfile(result.user);
+      await completeNewUserSignup(result.user, 'google');
     } catch (error) {
-      const errorCode =
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        typeof error.code === 'string'
-          ? error.code
-          : '';
+      const code = getFirebaseErrorCode(error);
 
-      if (errorCode !== 'auth/popup-closed-by-user') {
-        console.error('Google authentication error:', error);
-
-        toast({
-          title: 'Google sign-in failed',
-          description: getFriendlyAuthError(error),
-          variant: 'destructive',
-        });
+      if (code === 'auth/popup-closed-by-user') {
+        return;
       }
+
+      if (
+        error instanceof Error &&
+        error.message === 'USER_PROFILE_ALREADY_EXISTS'
+      ) {
+        await signOut(auth);
+        redirectExistingUserToLogin();
+        return;
+      }
+
+      console.error('Google signup error:', error);
+
+      toast({
+        title: 'Google signup failed',
+        description: getFriendlySignupError(error),
+        variant: 'destructive',
+      });
     } finally {
       setIsGoogleLoading(false);
     }
@@ -353,7 +375,6 @@ export function SignupSaveDialog({
     onOpenChange(nextOpen);
 
     if (!nextOpen) {
-      setMode('signup');
       resetForm();
     }
   }
@@ -364,23 +385,16 @@ export function SignupSaveDialog({
         <div className="border-b bg-gradient-to-br from-sky-50 via-background to-background px-6 py-6 dark:from-sky-950/40">
           <DialogHeader>
             <div className="mb-2 flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-500 text-white shadow-lg shadow-sky-500/20">
-              {mode === 'signup' ? (
-                <UserRound className="h-5 w-5" />
-              ) : (
-                <Lock className="h-5 w-5" />
-              )}
+              <UserRound className="h-5 w-5" />
             </div>
 
             <DialogTitle className="text-2xl">
-              {mode === 'signup'
-                ? 'Save your trip in 10 seconds'
-                : 'Log in and save your trip'}
+              Create your account and save this trip
             </DialogTitle>
 
             <DialogDescription className="leading-6">
-              {mode === 'signup'
-                ? 'Create a free Wanderwise account and keep this itinerary safely in your dashboard.'
-                : 'Log in to your existing account and save this itinerary without leaving the page.'}
+              This one-time benefit is available only to new Wanderwise
+              members. Your itinerary will be saved immediately after signup.
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -390,7 +404,7 @@ export function SignupSaveDialog({
             type="button"
             variant="outline"
             className="h-11 w-full"
-            onClick={handleGoogleAuthentication}
+            onClick={handleGoogleSignup}
             disabled={isLoading}
           >
             {isGoogleLoading ? (
@@ -398,7 +412,8 @@ export function SignupSaveDialog({
             ) : (
               <GoogleIcon />
             )}
-            Continue with Google
+
+            Sign up with Google
           </Button>
 
           <div className="relative">
@@ -408,32 +423,30 @@ export function SignupSaveDialog({
 
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-background px-2 text-muted-foreground">
-                Or use email
+                Or create an account with email
               </span>
             </div>
           </div>
 
-          <form onSubmit={handleEmailSubmit} className="space-y-4">
-            {mode === 'signup' && (
-              <div className="space-y-2">
-                <Label htmlFor="save-trip-name">Full name</Label>
+          <form onSubmit={handleEmailSignup} className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="save-trip-name">Full name</Label>
 
-                <div className="relative">
-                  <UserRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <div className="relative">
+                <UserRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
-                  <Input
-                    id="save-trip-name"
-                    value={displayName}
-                    onChange={(event) => setDisplayName(event.target.value)}
-                    placeholder="Your name"
-                    autoComplete="name"
-                    className="h-11 pl-10"
-                    disabled={isLoading}
-                    required
-                  />
-                </div>
+                <Input
+                  id="save-trip-name"
+                  value={displayName}
+                  onChange={(event) => setDisplayName(event.target.value)}
+                  placeholder="Your name"
+                  autoComplete="name"
+                  className="h-11 pl-10"
+                  disabled={isLoading}
+                  required
+                />
               </div>
-            )}
+            </div>
 
             <div className="space-y-2">
               <Label htmlFor="save-trip-email">Email address</Label>
@@ -467,9 +480,7 @@ export function SignupSaveDialog({
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="At least 6 characters"
-                  autoComplete={
-                    mode === 'signup' ? 'new-password' : 'current-password'
-                  }
+                  autoComplete="new-password"
                   className="h-11 px-10"
                   disabled={isLoading}
                   minLength={6}
@@ -501,44 +512,26 @@ export function SignupSaveDialog({
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
               )}
 
-              {mode === 'signup'
-                ? 'Create Account & Save Trip'
-                : 'Log In & Save Trip'}
+              Create Free Account & Save Trip
             </Button>
           </form>
 
-          <div className="rounded-xl border bg-muted/40 p-3">
-            <div className="flex items-center gap-2 text-sm font-medium">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              Your itinerary will be saved automatically
+          <div className="rounded-xl border bg-muted/40 p-4">
+            <div className="flex items-start gap-2 text-sm font-medium">
+              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-500" />
+
+              <span>Available only to brand-new Wanderwise accounts</span>
             </div>
 
-            <p className="mt-1 pl-6 text-xs leading-5 text-muted-foreground">
-              No credit card required. Your trip stays visible after signup or
-              login.
+            <p className="mt-2 pl-6 text-xs leading-5 text-muted-foreground">
+              Existing accounts will be directed to the login page and this
+              guest itinerary will not be saved.
             </p>
           </div>
 
-          <p className="text-center text-sm text-muted-foreground">
-            {mode === 'signup'
-              ? 'Already have an account?'
-              : 'New to Wanderwise?'}
-
-            <button
-              type="button"
-              onClick={() =>
-                changeMode(mode === 'signup' ? 'login' : 'signup')
-              }
-              className="ml-1 font-semibold text-primary hover:underline"
-              disabled={isLoading}
-            >
-              {mode === 'signup' ? 'Log in' : 'Create a free account'}
-            </button>
-          </p>
-
           <p className="text-center text-xs leading-5 text-muted-foreground">
-            By continuing, you agree to the Wanderwise terms and privacy
-            policy.
+            No credit card required. By continuing, you agree to the
+            Wanderwise terms and privacy policy.
           </p>
         </div>
       </DialogContent>
