@@ -1,81 +1,105 @@
 // src/app/ClientTrackingShell.tsx
-"use client";
+'use client';
 
-import { useEffect, useState } from "react";
-import TrackingScripts from "@/components/TrackingScripts";
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
 
-const STORAGE_KEY = "wanderwise_cookie_consent";
+import TrackingScripts from '@/components/TrackingScripts';
 
-type ConsentStatus = "unknown" | "accepted" | "rejected";
+const STORAGE_KEY = 'wanderwise_cookie_consent';
+
+type ConsentStatus = 'unknown' | 'accepted' | 'rejected';
 
 export default function ClientTrackingShell() {
-  const [status, setStatus] = useState<ConsentStatus>("unknown");
+  const [status, setStatus] = useState<ConsentStatus>('unknown');
+  const [hasLoadedConsent, setHasLoadedConsent] = useState(false);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
+    try {
+      const savedConsent = window.localStorage.getItem(STORAGE_KEY);
 
-    const saved = window.localStorage.getItem(STORAGE_KEY);
-
-    if (saved === "accepted" || saved === "rejected") {
-      setStatus(saved);
-    } else {
-      setStatus("unknown");
+      if (savedConsent === 'accepted' || savedConsent === 'rejected') {
+        setStatus(savedConsent);
+      } else {
+        setStatus('unknown');
+      }
+    } catch (error) {
+      console.error('Unable to read cookie consent:', error);
+      setStatus('unknown');
+    } finally {
+      setHasLoadedConsent(true);
     }
   }, []);
 
-  const handleAccept = () => {
-    setStatus("accepted");
+  function saveConsent(nextStatus: Exclude<ConsentStatus, 'unknown'>) {
+    setStatus(nextStatus);
 
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, "accepted");
-      window.dispatchEvent(new Event("ww-cookie-consent-changed"));
+    try {
+      window.localStorage.setItem(STORAGE_KEY, nextStatus);
+      window.dispatchEvent(
+        new CustomEvent('ww-cookie-consent-changed', {
+          detail: {
+            status: nextStatus,
+          },
+        })
+      );
+    } catch (error) {
+      console.error('Unable to save cookie consent:', error);
     }
-  };
+  }
 
-  const handleReject = () => {
-    setStatus("rejected");
+  function handleAccept() {
+    saveConsent('accepted');
+  }
 
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(STORAGE_KEY, "rejected");
-      window.dispatchEvent(new Event("ww-cookie-consent-changed"));
-    }
-  };
+  function handleReject() {
+    saveConsent('rejected');
+  }
+
+  if (!hasLoadedConsent) {
+    return null;
+  }
 
   return (
     <>
-      {status === "accepted" && <TrackingScripts />}
+      {status === 'accepted' && <TrackingScripts />}
 
-      {status === "unknown" && (
-        <div className="fixed inset-x-0 bottom-0 z-50 border-t border-slate-800 bg-slate-950/95 backdrop-blur">
-          <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-4 text-sm text-slate-100 sm:flex-row sm:items-center sm:justify-between">
-            <div className="space-y-1">
+      {status === 'unknown' && (
+        <aside
+          aria-label="Cookie consent"
+          className="fixed inset-x-0 bottom-0 z-[100] border-t border-slate-700 bg-slate-950 shadow-[0_-10px_35px_rgba(15,23,42,0.25)]"
+        >
+          <div className="mx-auto flex max-w-4xl flex-col gap-4 px-4 py-4 text-sm text-slate-100 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+            <div className="max-w-2xl space-y-1">
               <p className="font-semibold">
                 We use cookies to improve your experience.
               </p>
 
-              <p className="text-xs text-slate-400">
-                We use cookies for analytics and personalized content. Read our{" "}
-                <a
+              <p className="text-xs leading-5 text-slate-400">
+                We use optional cookies for analytics and personalized content.
+                Read our{' '}
+                <Link
                   href="/privacy"
-                  className="underline text-sky-300 hover:text-sky-400"
+                  className="font-medium text-sky-300 underline underline-offset-2 hover:text-sky-200"
                 >
                   Privacy Policy
-                </a>{" "}
-                and{" "}
-                <a
+                </Link>{' '}
+                and{' '}
+                <Link
                   href="/terms"
-                  className="underline text-sky-300 hover:text-sky-400"
+                  className="font-medium text-sky-300 underline underline-offset-2 hover:text-sky-200"
                 >
                   Terms of Service
-                </a>.
+                </Link>
+                .
               </p>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex shrink-0 gap-2">
               <button
                 type="button"
                 onClick={handleReject}
-                className="rounded-full border border-slate-600 px-4 py-2 text-xs font-medium text-slate-200 hover:border-slate-400"
+                className="min-h-10 flex-1 rounded-full border border-slate-600 px-5 py-2 text-xs font-medium text-slate-200 transition-colors hover:border-slate-400 hover:bg-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 sm:flex-none"
               >
                 Decline
               </button>
@@ -83,13 +107,13 @@ export default function ClientTrackingShell() {
               <button
                 type="button"
                 onClick={handleAccept}
-                className="rounded-full bg-sky-500 px-4 py-2 text-xs font-semibold text-slate-950 hover:bg-sky-400"
+                className="min-h-10 flex-1 rounded-full bg-sky-400 px-5 py-2 text-xs font-semibold text-slate-950 transition-colors hover:bg-sky-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-300 sm:flex-none"
               >
                 Accept cookies
               </button>
             </div>
           </div>
-        </div>
+        </aside>
       )}
     </>
   );
