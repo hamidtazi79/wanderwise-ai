@@ -69,6 +69,14 @@ function formatBudget(budget: StoredItineraryData['budget']) {
   return 'Mid-range';
 }
 
+function formatUsd(value: number) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
 function getInterestList(interests: string) {
   return interests
     .split(',')
@@ -215,7 +223,7 @@ function DayItineraryAccordion({ trip }: { trip: ParsedTrip | null }) {
                 <h3 className="mt-1 text-lg font-semibold">{day.title}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Estimated spend:{' '}
-                  {estimatedCost > 0 ? `£${estimatedCost}` : 'Flexible'} ·
+                  {estimatedCost > 0 ? formatUsd(estimatedCost) : 'Flexible'} ·
                   Travel intensity: Moderate
                 </p>
               </div>
@@ -296,7 +304,7 @@ function ActivityBlock({
                 {activity.cost != null && (
                   <Badge variant="secondary">
                     <DollarSign className="mr-1 h-3 w-3" />
-                    Approx £{activity.cost}
+                    Approx {formatUsd(Number(activity.cost) || 0)}
                   </Badge>
                 )}
               </div>
@@ -355,55 +363,63 @@ function PlacesPreviewCard({
   );
 }
 
-function HotelRecommendationsCard({ destination }: { destination: string }) {
-  const hotels = [
-    {
-      label: 'Budget',
-      area: 'Well-connected outer central area',
-      price: 'From £80/night',
-      description:
-        'Best if you want to keep costs lower while staying close to transport.',
-    },
-    {
-      label: 'Mid-range',
-      area: 'Central walkable neighborhood',
-      price: 'From £140/night',
-      description:
-        'Great for first-time visitors who want food, sights, and easy daily routing.',
-    },
-    {
-      label: 'Premium',
-      area: 'Iconic view or luxury district',
-      price: 'From £280/night',
-      description:
-        'Ideal for special trips, romantic stays, and a more polished travel experience.',
-    },
-  ];
+function HotelRecommendationsCard({
+  destination,
+  trip,
+}: {
+  destination: string;
+  trip: ParsedTrip | null;
+}) {
+  const hotels = trip?.hotelRecommendations ?? [];
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Where to stay</CardTitle>
         <CardDescription>
-          Hotel ideas based on your {destination} itinerary.
+          Destination-specific hotel areas and estimated nightly prices for{' '}
+          {destination}.
         </CardDescription>
       </CardHeader>
 
-      <CardContent className="grid gap-4 sm:grid-cols-3">
-        {hotels.map((hotel) => (
-          <div key={hotel.label} className="rounded-2xl border p-4">
-            <Badge>{hotel.label}</Badge>
-            <h3 className="mt-3 font-semibold">{hotel.area}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {hotel.description}
-            </p>
-            <p className="mt-3 text-sm font-semibold">{hotel.price}</p>
-          </div>
-        ))}
+      <CardContent>
+        {hotels.length === 3 ? (
+          <>
+            <div className="grid gap-4 sm:grid-cols-3">
+              {hotels.map((hotel) => (
+                <div
+                  key={hotel.category}
+                  className="flex min-w-0 flex-col rounded-2xl border p-4"
+                >
+                  <Badge className="w-fit">{hotel.category}</Badge>
 
-        <p className="text-sm text-muted-foreground sm:col-span-3">
-          Save trip to keep hotel recommendations and compare options later.
-        </p>
+                  <h3 className="mt-3 break-words font-semibold">
+                    {hotel.area}
+                  </h3>
+
+                  <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">
+                    {hotel.description}
+                  </p>
+
+                  <p className="mt-4 text-sm font-semibold">
+                    From {formatUsd(hotel.pricePerNight)}/night
+                  </p>
+                </div>
+              ))}
+            </div>
+
+            <p className="mt-4 text-xs leading-5 text-muted-foreground">
+              Prices are AI-generated estimates in USD and may vary by dates,
+              availability, season, and property.
+            </p>
+          </>
+        ) : (
+          <div className="rounded-2xl border border-dashed p-5 text-sm leading-6 text-muted-foreground">
+            This itinerary was created before destination-specific hotel
+            recommendations were added. Generate a new itinerary to receive
+            local hotel areas and estimated USD prices for {destination}.
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -821,7 +837,10 @@ function ItineraryResultContent() {
             </Card>
 
             <PlacesPreviewCard places={places} onUnlock={handleSave} />
-            <HotelRecommendationsCard destination={itineraryData.destination} />
+            <HotelRecommendationsCard
+              destination={itineraryData.destination}
+              trip={parsedTrip}
+            />
           </aside>
         </div>
       </main>
