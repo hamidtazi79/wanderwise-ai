@@ -1,62 +1,130 @@
 'use server';
 
 /**
- * @fileOverview Generates smart travel itineraries based on user interests, budget, and duration.
+ * @fileOverview Generates destination-specific travel itineraries,
+ * activity costs, and hotel recommendations.
  *
- * - generateSmartItinerary - A function that generates a travel itinerary.
- * - GenerateSmartItineraryInput - The input type for the generateSmartItinerary function.
- * - GenerateSmartItineraryOutput - The return type for the generateSmartItinerary function.
+ * - generateSmartItinerary - Generates a personalized travel itinerary.
+ * - GenerateSmartItineraryInput - Input type for itinerary generation.
+ * - GenerateSmartItineraryOutput - Output type for itinerary generation.
  */
 
-import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import { ai } from '@/ai/genkit';
+import { z } from 'genkit';
 
 const GenerateSmartItineraryInputSchema = z.object({
-  destination: z.string().describe('The destination for the itinerary.'),
-  duration: z.number().describe('The duration of the trip in days.'),
-  interests: z.string().describe('A comma-separated list of interests.'),
+  destination: z
+    .string()
+    .describe('The city, region, or country for the itinerary.'),
+
+  duration: z
+    .number()
+    .describe('The duration of the trip in days.'),
+
+  interests: z
+    .string()
+    .describe('A comma-separated list of traveler interests.'),
+
   budget: z
     .enum(['low', 'medium', 'high'])
-    .describe('The budget for the trip (e.g., "low", "medium", "high").'),
+    .describe('The traveler budget level.'),
 });
+
 export type GenerateSmartItineraryInput = z.infer<
   typeof GenerateSmartItineraryInputSchema
 >;
 
 const ActivitySchema = z.object({
-  activity: z.string().describe('A concise title for the activity.'),
+  activity: z
+    .string()
+    .describe('A concise title for the activity.'),
+
   description: z
     .string()
-    .describe('A detailed paragraph describing the activity.'),
-  location: z.string().optional().describe('The specific address or area.'),
-  cost: z.number().describe('The estimated cost of this activity in USD. Must be a number (e.g., 25, 0, 150).'),
+    .describe(
+      'A detailed, natural paragraph explaining the activity and why it suits the traveler.'
+    ),
+
+  location: z
+    .string()
+    .optional()
+    .describe(
+      'A specific landmark, neighborhood, district, or approximate area.'
+    ),
+
+  cost: z
+    .number()
+    .describe(
+      'The estimated per-person cost of the activity in USD. Use 0 for free activities.'
+    ),
 });
 
 const DayPlanSchema = z.object({
-  day: z.number().describe('The day number of the itinerary (e.g., 1).'),
+  day: z
+    .number()
+    .describe('The itinerary day number, beginning with 1.'),
+
   title: z
     .string()
-    .describe("A short, catchy title for the day's theme or main event."),
+    .describe("A short and engaging title for the day's theme."),
+
   morning: z
     .array(ActivitySchema)
-    .describe('An array of activities for the morning.'),
+    .describe('One or more morning activities.'),
+
   afternoon: z
     .array(ActivitySchema)
-    .describe('An array of activities for the afternoon.'),
+    .describe('One or more afternoon activities.'),
+
   evening: z
     .array(ActivitySchema)
-    .describe('An array of activities for the evening.'),
+    .describe('One or more evening activities.'),
+});
+
+const HotelRecommendationSchema = z.object({
+  category: z
+    .enum(['Budget', 'Mid-range', 'Premium'])
+    .describe('The accommodation price category.'),
+
+  area: z
+    .string()
+    .describe(
+      'A real neighborhood, district, resort area, or suitable part of the destination.'
+    ),
+
+  description: z
+    .string()
+    .describe(
+      'A concise explanation of why this area suits this category of traveler.'
+    ),
+
+  pricePerNight: z
+    .number()
+    .describe(
+      'A realistic approximate starting nightly accommodation price in USD.'
+    ),
+
+  currency: z
+    .literal('USD')
+    .describe('The currency used for the nightly price.'),
 });
 
 const GenerateSmartItineraryOutputSchema = z.object({
   overview: z
     .string()
     .describe(
-      'A brief, engaging one-paragraph overview of the entire trip.'
+      'A brief and engaging paragraph summarizing the complete trip.'
     ),
+
   days: z
     .array(DayPlanSchema)
-    .describe('An array of daily plans for the itinerary.'),
+    .describe('The complete day-by-day itinerary.'),
+
+  hotelRecommendations: z
+    .array(HotelRecommendationSchema)
+    .describe(
+      'Exactly three destination-specific accommodation recommendations: Budget, Mid-range, and Premium.'
+    ),
 });
 
 export type GenerateSmartItineraryOutput = z.infer<
@@ -71,34 +139,94 @@ export async function generateSmartItinerary(
 
 const prompt = ai.definePrompt({
   name: 'generateSmartItineraryPrompt',
-  input: {schema: GenerateSmartItineraryInputSchema},
-  output: {schema: GenerateSmartItineraryOutputSchema},
-  prompt: `You are a world-class travel expert creating a professional, detailed, and engaging travel itinerary in valid JSON format.
 
-  **User Request:**
-  - **Destination:** {{destination}}
-  - **Duration:** {{duration}} days
-  - **Interests:** {{interests}}
-  - **Budget:** {{budget}}
+  input: {
+    schema: GenerateSmartItineraryInputSchema,
+  },
 
-  **JSON Output Instructions:**
-  1.  **Overview:** Start with a single, engaging paragraph summarizing the trip's essence. This should be the value for the 'overview' key.
-  2.  **Daily Plan (\`days\` array):**
-      - For EACH of the {{duration}} days, create a JSON object in the 'days' array.
-      - Each day object must have a 'day' number and a short, catchy 'title'.
-      - Each day must have 'morning', 'afternoon', and 'evening' arrays of activity objects.
-      - **Do not leave any time slot array (morning, afternoon, evening) empty. Each must contain at least one activity object.**
-  3.  **Activity Objects:**
-      - Each activity object must have an 'activity' (a short title) and a 'description' (a full, well-written paragraph).
-      - Each activity object MUST have a 'cost' field, which is a number representing the estimated cost in USD (e.g., 50, 0, 125). Make these details realistic for the user's budget.
-      - If applicable, include 'location' (address or area).
-      - The 'description' should be a natural, flowing paragraph. Do not use lists, bullet points, or labels like "Address:" or "Cost:" within the description text itself. Weave the details into the narrative.
-  4.  **Content Style:**
-      - The tone should be inspiring, informative, and professional.
-      - Ensure the plan is logical, geographically sensible, and tailored to the user's interests and budget.
-      - All string values in the JSON must be properly escaped.
+  output: {
+    schema: GenerateSmartItineraryOutputSchema,
+  },
 
-  Generate the complete JSON output for the {{duration}}-day itinerary based on the user's request.`,
+  prompt: `
+You are a world-class travel planner creating a professional,
+destination-specific itinerary.
+
+USER REQUEST
+
+Destination: {{destination}}
+Duration: {{duration}} days
+Interests: {{interests}}
+Budget: {{budget}}
+
+GENERAL REQUIREMENTS
+
+- Generate practical recommendations specifically for {{destination}}.
+- Adapt activities, accommodation areas, and prices to the destination.
+- Adapt the itinerary to the user's selected budget.
+- Use USD for every activity and accommodation price.
+- Treat all prices as realistic estimates, not guaranteed live prices.
+- Keep the itinerary geographically sensible.
+- Avoid inventing exact street addresses when uncertain.
+- Never reuse generic accommodation areas such as
+  "outer central area" or "luxury district" when a real local area
+  can reasonably be recommended.
+
+OVERVIEW
+
+Create one engaging paragraph summarizing the trip.
+
+DAILY ITINERARY
+
+Create exactly {{duration}} day objects.
+
+Each day must include:
+
+- A sequential day number.
+- A short, engaging title.
+- At least one morning activity.
+- At least one afternoon activity.
+- At least one evening activity.
+
+Every activity must include:
+
+- A concise activity title.
+- A useful, natural description.
+- A realistic estimated per-person cost in USD.
+- Use 0 when the activity is free.
+- A relevant location, neighborhood, landmark, or area when possible.
+
+Descriptions must be natural paragraphs.
+
+Do not place labels such as "Address:", "Price:", or "Cost:"
+inside activity descriptions.
+
+HOTEL RECOMMENDATIONS
+
+Create exactly three hotelRecommendations in this order:
+
+1. Budget
+2. Mid-range
+3. Premium
+
+For each recommendation:
+
+- Recommend a real and suitable area within or near {{destination}}.
+- Explain why the area suits that accommodation category.
+- Provide a realistic approximate starting price per night.
+- Use USD only.
+- Set currency to "USD".
+- Return the price as a number without a currency symbol.
+- Do not recommend a specific hotel unless you are confident it exists.
+- Prefer neighborhood or district recommendations over hotel names.
+- Prices must reflect the local accommodation market.
+
+For example, an affordable Moroccan city should normally have
+lower accommodation estimates than central London, Paris, New York,
+Dubai, Tokyo, or Switzerland.
+
+Return only data matching the required output schema.
+`,
 });
 
 const generateSmartItineraryFlow = ai.defineFlow(
@@ -107,11 +235,28 @@ const generateSmartItineraryFlow = ai.defineFlow(
     inputSchema: GenerateSmartItineraryInputSchema,
     outputSchema: GenerateSmartItineraryOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+
+  async (input) => {
+    const { output } = await prompt(input);
+
     if (!output) {
-      throw new Error('Failed to generate itinerary. AI returned no output.');
+      throw new Error(
+        'Failed to generate itinerary. The AI returned no output.'
+      );
     }
+
+    if (output.days.length !== input.duration) {
+      throw new Error(
+        `The AI generated ${output.days.length} days instead of ${input.duration}.`
+      );
+    }
+
+    if (output.hotelRecommendations.length !== 3) {
+      throw new Error(
+        'The AI did not generate all three accommodation recommendations.'
+      );
+    }
+
     return output;
   }
 );
