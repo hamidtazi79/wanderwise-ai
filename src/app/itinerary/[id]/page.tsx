@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { doc } from 'firebase/firestore';
 import {
@@ -10,6 +10,7 @@ import {
   Crown,
   DollarSign,
   Download,
+  ExternalLink,
   FileText,
   Info,
   Lock,
@@ -38,6 +39,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import HotelRecommendations from '@/components/hotel-recommendations';
 
 type StoredItineraryData = {
   destination: string;
@@ -60,6 +62,22 @@ function formatBudget(budget: string) {
   if (budget === 'low') return 'Budget-friendly';
   if (budget === 'high') return 'Premium';
   return 'Mid-range';
+}
+
+function formatUsd(value: number) {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    maximumFractionDigits: 0,
+  }).format(value);
+}
+
+function getGoogleMapsUrl(place: string, destination: string) {
+  const query = [place, destination].filter(Boolean).join(', ');
+
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+    query
+  )}`;
 }
 
 function getInterestList(interests?: string) {
@@ -221,7 +239,7 @@ function DayAccordion({ trip }: { trip: GenerateSmartItineraryOutput | null }) {
                 <h3 className="mt-1 text-lg font-semibold">{day.title}</h3>
                 <p className="mt-1 text-sm text-muted-foreground">
                   Estimated spend:{' '}
-                  {estimatedCost > 0 ? `£${estimatedCost}` : 'Flexible'} ·
+                  {estimatedCost > 0 ? formatUsd(estimatedCost) : 'Flexible'} ·
                   Travel intensity: Moderate
                 </p>
               </div>
@@ -281,7 +299,7 @@ function ActivityBlock({
                 {activity.cost != null && (
                   <Badge variant="secondary">
                     <DollarSign className="mr-1 h-3 w-3" />
-                    Approx £{activity.cost}
+                    Approx {formatUsd(Number(activity.cost) || 0)}
                   </Badge>
                 )}
               </div>
@@ -295,103 +313,94 @@ function ActivityBlock({
 
 function PlacesPreviewCard({
   places,
+  destination,
   isSubscribed,
 }: {
   places: string[];
+  destination: string;
   isSubscribed: boolean;
 }) {
+  const visiblePlaces = places.length
+    ? places
+    : ['More places will appear when the itinerary includes locations'];
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>Places in this trip</CardTitle>
         <CardDescription>
-          {places.length || 0} places detected from your itinerary.
+          {places.length || 0} places detected. Tap a location to open it in
+          Google Maps.
         </CardDescription>
       </CardHeader>
 
       <CardContent className="space-y-5">
         <div className="rounded-2xl border bg-gradient-to-br from-sky-50 to-slate-100 p-6 text-center dark:from-slate-900 dark:to-slate-800">
-          <MapPin className="mx-auto h-8 w-8 text-sky-500" />
-          <p className="mt-3 font-medium">
+          <MapPin className="mx-auto h-9 w-9 text-sky-500" />
+
+          <p className="mt-3 font-semibold">
             {isSubscribed
-              ? 'Map planning coming soon'
-              : 'Interactive map available with Premium'}
+              ? 'Premium interactive map is coming soon'
+              : 'Interactive trip map is a Premium feature'}
           </p>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Keep places, routes, and map planning in one dashboard.
+
+          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+            Google Maps links are available below for everyone. Premium will
+            add all trip locations, routes, hotels, and day filters in one
+            embedded map.
           </p>
 
           {!isSubscribed && (
             <Button asChild className="mt-4">
               <Link href="/pricing">
                 <Lock className="mr-2 h-4 w-4" />
-                Unlock Map View
+                View Premium Maps
               </Link>
             </Button>
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2">
-          {(places.length ? places : ['More places available after upgrade']).map((place) => (
-            <Badge key={place} variant="secondary">
-              {place}
-            </Badge>
-          ))}
+        <div className="grid gap-3">
+          {visiblePlaces.map((place) =>
+            places.length ? (
+              <a
+                key={place}
+                href={getGoogleMapsUrl(place, destination)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex min-w-0 items-center justify-between gap-3 rounded-xl border bg-card p-3 transition hover:border-sky-400 hover:bg-sky-50"
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <MapPin className="h-4 w-4 shrink-0 text-sky-500" />
+                  <span className="break-words text-sm font-medium">
+                    {place}
+                  </span>
+                </span>
+
+                <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:text-sky-600" />
+              </a>
+            ) : (
+              <div
+                key={place}
+                className="rounded-xl border border-dashed p-4 text-sm leading-6 text-muted-foreground"
+              >
+                {place}
+              </div>
+            )
+          )}
         </div>
+
+        {places.length > 0 && (
+          <p className="text-xs leading-5 text-muted-foreground">
+            Google Maps opens in a new tab or in the Maps app when supported.
+            You can then choose Directions from your current location.
+          </p>
+        )}
       </CardContent>
     </Card>
   );
 }
 
-function HotelRecommendationsCard({ destination }: { destination: string }) {
-  const hotels = [
-    {
-      label: 'Budget',
-      area: 'Well-connected outer central area',
-      price: 'From £80/night',
-      description:
-        'Best if you want to keep costs lower while staying close to transport.',
-    },
-    {
-      label: 'Mid-range',
-      area: 'Central walkable neighborhood',
-      price: 'From £140/night',
-      description:
-        'Great for first-time visitors who want food, sights, and easy daily routing.',
-    },
-    {
-      label: 'Premium',
-      area: 'Iconic view or luxury district',
-      price: 'From £280/night',
-      description:
-        'Ideal for special trips, romantic stays, and a more polished travel experience.',
-    },
-  ];
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Where to stay</CardTitle>
-        <CardDescription>
-          Hotel ideas based on your {destination} itinerary.
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="grid gap-4 sm:grid-cols-3">
-        {hotels.map((hotel) => (
-          <div key={hotel.label} className="rounded-2xl border p-4">
-            <Badge>{hotel.label}</Badge>
-            <h3 className="mt-3 font-semibold">{hotel.area}</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {hotel.description}
-            </p>
-            <p className="mt-3 text-sm font-semibold">{hotel.price}</p>
-          </div>
-        ))}
-      </CardContent>
-    </Card>
-  );
-}
 
 function FoodHiddenGemsCard({ interests }: { interests: string[] }) {
   return (
@@ -538,7 +547,6 @@ function ItineraryDetailsSkeleton() {
 
 export default function SavedItineraryPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params.id as string;
 
   const { user } = useUser();
@@ -557,7 +565,9 @@ export default function SavedItineraryPage() {
   }, [user, firestore]);
 
   const { data: userProfile } = useDoc(userProfileRef);
-  const isSubscribed = userProfile?.subscriptionStatus !== 'free';
+  const isSubscribed =
+    Boolean(userProfile?.subscriptionStatus) &&
+    userProfile.subscriptionStatus !== 'free';
 
   const parsedTrip = useMemo(
     () => parseItinerary(itinerary?.generatedItinerary),
@@ -614,19 +624,19 @@ export default function SavedItineraryPage() {
 
         textContent += `MORNING:\n`;
         day.morning.forEach((act) => {
-          textContent += `- ${act.activity} (£${act.cost})\n  ${act.description}\n`;
+          textContent += `- ${act.activity} (${formatUsd(Number(act.cost) || 0)})\n  ${act.description}\n`;
           if (act.location) textContent += `  Location: ${act.location}\n`;
         });
 
         textContent += `\nAFTERNOON:\n`;
         day.afternoon.forEach((act) => {
-          textContent += `- ${act.activity} (£${act.cost})\n  ${act.description}\n`;
+          textContent += `- ${act.activity} (${formatUsd(Number(act.cost) || 0)})\n  ${act.description}\n`;
           if (act.location) textContent += `  Location: ${act.location}\n`;
         });
 
         textContent += `\nEVENING:\n`;
         day.evening.forEach((act) => {
-          textContent += `- ${act.activity} (£${act.cost})\n  ${act.description}\n`;
+          textContent += `- ${act.activity} (${formatUsd(Number(act.cost) || 0)})\n  ${act.description}\n`;
           if (act.location) textContent += `  Location: ${act.location}\n`;
         });
 
@@ -748,8 +758,15 @@ export default function SavedItineraryPage() {
             </CardContent>
           </Card>
 
-          <PlacesPreviewCard places={places} isSubscribed={isSubscribed} />
-          <HotelRecommendationsCard destination={data.destination} />
+          <PlacesPreviewCard
+            places={places}
+            destination={data.destination}
+            isSubscribed={isSubscribed}
+          />
+          <HotelRecommendations
+            destination={data.destination}
+            recommendations={parsedTrip?.hotelRecommendations}
+          />
         </aside>
       </div>
 
