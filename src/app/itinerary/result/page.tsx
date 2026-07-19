@@ -28,6 +28,7 @@ import { useUser, useFirestore } from '@/firebase/provider';
 import { useToast } from '@/hooks/use-toast';
 import type { GenerateSmartItineraryOutput } from '@/ai/flows/generate-smart-itineraries';
 import { SignupSaveDialog } from '@/components/signup-save-dialog';
+import TripIntelligence from '@/components/trip-intelligence';
 import { getDestinationImage } from '@/lib/getDestinationImage';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -812,6 +813,14 @@ function ItineraryResultContent() {
         <div className="grid gap-8 lg:grid-cols-[1.35fr_0.85fr]">
           <div className="space-y-8">
             <DayItineraryAccordion trip={parsedTrip} />
+
+            <TripIntelligence
+              destination={itineraryData.destination}
+              duration={itineraryData.duration}
+              budget={itineraryData.budget}
+              trip={parsedTrip}
+            />
+
             <SaveTripPrompt onSave={handleSave} />
             <FoodHiddenGemsCard interests={interestsArray} />
             <TravelTipsCard />
