@@ -40,6 +40,7 @@ import {
 } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import HotelRecommendations from '@/components/hotel-recommendations';
+import TripIntelligence from '@/components/trip-intelligence';
 
 type StoredItineraryData = {
   destination: string;
@@ -716,6 +717,14 @@ export default function SavedItineraryPage() {
       <div className="grid gap-8 lg:grid-cols-[1.35fr_0.85fr]">
         <div className="space-y-8">
           <DayAccordion trip={parsedTrip} />
+
+          <TripIntelligence
+            destination={data.destination}
+            duration={data.duration}
+            budget={data.budget}
+            trip={parsedTrip}
+          />
+
           <FoodHiddenGemsCard interests={interestsArray} />
           <TravelTipsCard />
 
@@ -802,3 +811,4 @@ export default function SavedItineraryPage() {
     </main>
   );
 }
+
