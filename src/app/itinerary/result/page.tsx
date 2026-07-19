@@ -376,41 +376,58 @@ function HotelRecommendationsCard({
     <Card>
       <CardHeader>
         <CardTitle>Where to stay</CardTitle>
+
         <CardDescription>
           Destination-specific hotel areas and estimated nightly prices for{' '}
-          {destination}.
+          <span className="capitalize">{destination}</span>.
         </CardDescription>
       </CardHeader>
 
-      <CardContent>
+      <CardContent className="space-y-4">
         {hotels.length === 3 ? (
           <>
-            <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-4">
               {hotels.map((hotel) => (
                 <div
                   key={hotel.category}
-                  className="flex min-w-0 flex-col rounded-2xl border p-4"
+                  className="rounded-2xl border bg-card p-5"
                 >
-                  <Badge className="w-fit">{hotel.category}</Badge>
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1">
+                      <Badge className="w-fit">
+                        {hotel.category}
+                      </Badge>
 
-                  <h3 className="mt-3 break-words font-semibold">
-                    {hotel.area}
-                  </h3>
+                      <h3 className="mt-3 text-base font-semibold leading-6">
+                        {hotel.area}
+                      </h3>
 
-                  <p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">
-                    {hotel.description}
-                  </p>
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        {hotel.description}
+                      </p>
+                    </div>
 
-                  <p className="mt-4 text-sm font-semibold">
-                    From {formatUsd(hotel.pricePerNight)}/night
-                  </p>
+                    <div className="shrink-0 rounded-xl bg-slate-50 px-4 py-3 text-left sm:text-right">
+                      <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                        From
+                      </p>
+
+                      <p className="mt-1 whitespace-nowrap text-lg font-bold text-slate-950">
+                        {formatUsd(hotel.pricePerNight)}
+                      </p>
+
+                      <p className="text-xs text-muted-foreground">
+                        per night
+                      </p>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
 
-            <p className="mt-4 text-xs leading-5 text-muted-foreground">
-              Prices are AI-generated estimates in USD and may vary by dates,
-              availability, season, and property.
+            <p className="text-xs leading-5 text-muted-foreground">
+              Prices are AI-generated estimates in USD and may vary depending
+              on travel dates, season, availability, and accommodation type.
             </p>
           </>
         ) : (
