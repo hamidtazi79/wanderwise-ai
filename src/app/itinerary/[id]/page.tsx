@@ -10,7 +10,6 @@ import {
   Crown,
   DollarSign,
   Download,
-  ExternalLink,
   FileText,
   Info,
   Lock,
@@ -41,6 +40,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton';
 import HotelRecommendations from '@/components/hotel-recommendations';
 import TripIntelligence from '@/components/trip-intelligence';
+import PremiumTripMap from '@/components/premium-trip-map';
 
 type StoredItineraryData = {
   destination: string;
@@ -73,13 +73,6 @@ function formatUsd(value: number) {
   }).format(value);
 }
 
-function getGoogleMapsUrl(place: string, destination: string) {
-  const query = [place, destination].filter(Boolean).join(', ');
-
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    query
-  )}`;
-}
 
 function getInterestList(interests?: string) {
   return (interests || '')
@@ -88,19 +81,6 @@ function getInterestList(interests?: string) {
     .filter(Boolean);
 }
 
-function collectPlaces(trip: GenerateSmartItineraryOutput | null) {
-  if (!trip?.days) return [];
-
-  const places = new Set<string>();
-
-  trip.days.forEach((day) => {
-    [...day.morning, ...day.afternoon, ...day.evening].forEach((activity) => {
-      if (activity.location) places.add(activity.location);
-    });
-  });
-
-  return Array.from(places).slice(0, 10);
-}
 
 
 function TripHero({
@@ -312,97 +292,6 @@ function ActivityBlock({
   );
 }
 
-function PlacesPreviewCard({
-  places,
-  destination,
-  isSubscribed,
-}: {
-  places: string[];
-  destination: string;
-  isSubscribed: boolean;
-}) {
-  const visiblePlaces = places.length
-    ? places
-    : ['More places will appear when the itinerary includes locations'];
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Places in this trip</CardTitle>
-        <CardDescription>
-          {places.length || 0} places detected. Tap a location to open it in
-          Google Maps.
-        </CardDescription>
-      </CardHeader>
-
-      <CardContent className="space-y-5">
-        <div className="rounded-2xl border bg-gradient-to-br from-sky-50 to-slate-100 p-6 text-center dark:from-slate-900 dark:to-slate-800">
-          <MapPin className="mx-auto h-9 w-9 text-sky-500" />
-
-          <p className="mt-3 font-semibold">
-            {isSubscribed
-              ? 'Premium interactive map is coming soon'
-              : 'Interactive trip map is a Premium feature'}
-          </p>
-
-          <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
-            Google Maps links are available below for everyone. Premium will
-            add all trip locations, routes, hotels, and day filters in one
-            embedded map.
-          </p>
-
-          {!isSubscribed && (
-            <Button asChild className="mt-4">
-              <Link href="/pricing">
-                <Lock className="mr-2 h-4 w-4" />
-                View Premium Maps
-              </Link>
-            </Button>
-          )}
-        </div>
-
-        <div className="grid gap-3">
-          {visiblePlaces.map((place) =>
-            places.length ? (
-              <a
-                key={place}
-                href={getGoogleMapsUrl(place, destination)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="group flex min-w-0 items-center justify-between gap-3 rounded-xl border bg-card p-3 transition hover:border-sky-400 hover:bg-sky-50"
-              >
-                <span className="flex min-w-0 items-center gap-2">
-                  <MapPin className="h-4 w-4 shrink-0 text-sky-500" />
-                  <span className="break-words text-sm font-medium">
-                    {place}
-                  </span>
-                </span>
-
-                <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:text-sky-600" />
-              </a>
-            ) : (
-              <div
-                key={place}
-                className="rounded-xl border border-dashed p-4 text-sm leading-6 text-muted-foreground"
-              >
-                {place}
-              </div>
-            )
-          )}
-        </div>
-
-        {places.length > 0 && (
-          <p className="text-xs leading-5 text-muted-foreground">
-            Google Maps opens in a new tab or in the Maps app when supported.
-            You can then choose Directions from your current location.
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-
 function FoodHiddenGemsCard({ interests }: { interests: string[] }) {
   return (
     <Card className="border-sky-500/20">
@@ -579,8 +468,6 @@ export default function SavedItineraryPage() {
     () => getInterestList(itinerary?.interests),
     [itinerary]
   );
-
-  const places = useMemo(() => collectPlaces(parsedTrip), [parsedTrip]);
 
   const handleShare = async () => {
     const shareUrl = typeof window !== 'undefined' ? window.location.href : '';
@@ -767,10 +654,10 @@ export default function SavedItineraryPage() {
             </CardContent>
           </Card>
 
-          <PlacesPreviewCard
-            places={places}
+          <PremiumTripMap
             destination={data.destination}
-            isSubscribed={isSubscribed}
+            trip={parsedTrip}
+            isPremium={isSubscribed}
           />
           <HotelRecommendations
             destination={data.destination}
